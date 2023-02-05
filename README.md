@@ -1,40 +1,25 @@
 ## Introduction
 
-This repository demonstrates how to create generalized data preprocessing pipelines for your machine learning algorithm implementation. The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
+This repository demonstrates how to create generalized data preprocessing pipeline for your machine learning algorithm implementation. The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
 
 ## Repository Contents
 
-The `app/` folder in the repository contains the following:
+The `app/` folder in the repository contains the following key folders/sub-folders:
 
-- `inputs/`: a folder containing an example schema file called `employee_attrition_schema.json`.
-- `schema_reader.py`: a module containing the **BinaryClassificationSchemaReader** class, which can be used to parse a data schema and extract relevant information from it.
-- `run_script.py`: an example script that uses the **BinaryClassificationSchemaReader** class to parse an example schema file and print out information about the fields and features in the schema.
-
-## Example Schema File
-
-An example schema file called `employee_attrition_schema.json` is included in the `inputs` folder of this repository. The schema is created as per Ready Tensor specifications for the Binary Classification problem category. This file serves as an example of the format that a data schema can follow and provides a basis for users to create their own schema files for their own datasets.
+- `data_management/` will all files related to handling and preprocessing data.
+- `inputs/` contains the input files related to the _titanic_ dataset.
+- `outputs/` is a folder to save model artifacts and other result files. Within this folder:
+  - `artifacts/` is location to save model artifacts (i.e. the saved model including the trained preprocessing pipeline)
+  - `outputs/` is used to contain the predictions or other results files (functionality not included in this repo)
 
 ## Usage
 
-The repository contains a single Python class, **BinaryClassificationSchemaReader**, which reads a JSON data schema file and extracts information about the features and target variables of a binary classification problem.
+- Create your virtual environment and install dependencies listed in `requirements.txt`.
+- Place the train data file in csv format in the path `./app/inputs/`
+- Place the schema file in JSON format in the path `./app/inputs/`. The schema conforms to Ready Tensor specification for the **Binary Classification-Base** category.
+- Update the file paths in the `run_script.py` file in `./app/` and run the script as follows.
 
-To use the **BinaryClassificationSchemaReader** class, instantiate it by passing the file path of the data schema. Then, access the following properties to get the information about the features and target variables:
-
-- `id_field`: the ID field of the data
-- `target_field`: the target field of the data
-- `target_class`: the target class of the binary classification problem
-- `numeric_features`: the list of numerical features in the data
-- `categorical_features`: the list of categorical features in the data
-- `features`: the list of all features in the data
-- `all_fields`: the list of all fields in the data, including the ID and target fields
-
-For more details, see the code and the provided example in the `read_schema` function in `run_script.py` file. To run the code, simply update the path of the schema file in read_schema function and run the script.
-
-```bash
-python app/schema_reader.py
-```
-
-The function will print the contents of the schema file, including the `id_field`, `target_field`, `target_class`, `numeric_features`, `categorical_features`, and `all_fields`.
+The script will print top 10 rows of the transformed data and also save the preprocessing pipeline in the path `./app/outputs/artifacts/`.
 
 ## Requirements
 
@@ -42,6 +27,10 @@ The code requires Python 3 and the following libraries:
 
 ```makefile
 json==2.0.9
+pandas==1.5.2
+numpy==1.20.3
+scikit-learn==1.0
+feature-engine==1.2.0
 ```
 
 These packages can be installed by running the following command:
