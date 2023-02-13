@@ -14,6 +14,7 @@ import data_management.preprocessors as preprocessors
 
 
 PREPROCESSOR_FNAME = "preprocessor.save"
+LABEL_ENCODER_FNAME = "label_encoder.save"
 
 def get_preprocess_pipeline(bc_schema):
     pipeline = Pipeline(
@@ -21,7 +22,7 @@ def get_preprocess_pipeline(bc_schema):
             (
                 # keep only the columns that were defined in the schema
                 "column_selector",
-                preprocessors.ColumnSelector(columns=bc_schema.all_fields),
+                preprocessors.ColumnSelector(columns=bc_schema.features),
             ),
             (
                 # add missing indicator for nas in numerical features
@@ -87,32 +88,29 @@ def get_preprocess_pipeline(bc_schema):
                     columns=bc_schema.categorical_features,
                     selector_type="drop"
                 ),
-            ),
-            (
-                "label_binarizer",
-                preprocessors.CustomLabelBinarizer(
-                    target_field=bc_schema.target_field,
-                    target_class=bc_schema.target_class,
-                ),
             )
         ]
     )
     return pipeline
 
+def get_label_encoder(bc_schema): 
+    return preprocessors.CustomLabelBinarizer(
+        target_field=bc_schema.target_field,
+        target_class=bc_schema.target_class,
+    )
 
-def get_class_names(pipeline):
-    label_binarizer = pipeline["label_binarizer"]
-    class_names = label_binarizer.given_classes
+def get_class_names(label_encoder):
+    class_names = label_encoder.given_classes
     return class_names
 
 
-def save_preprocessor(preprocess_pipe, file_path):
-    file_path_and_name = os.path.join(file_path, PREPROCESSOR_FNAME)
-    joblib.dump(preprocess_pipe, file_path_and_name)
+def save_preprocessor_and_lbl_encoder(preprocess_pipe, label_encoder, file_path):
+    joblib.dump(preprocess_pipe, os.path.join(file_path, PREPROCESSOR_FNAME))
+    joblib.dump(label_encoder, os.path.join(file_path, LABEL_ENCODER_FNAME))
     return
 
 
-def load_preprocessor(file_path):
-    file_path_and_name = os.path.join(file_path, PREPROCESSOR_FNAME)
-    preprocess_pipe = joblib.load(file_path_and_name)
-    return preprocess_pipe
+def load_preprocessor_and_lbl_encoder(file_path):
+    preprocess_pipe = joblib.load(os.path.join(file_path, PREPROCESSOR_FNAME))
+    label_encoder = joblib.load(os.path.join(file_path, LABEL_ENCODER_FNAME))
+    return preprocess_pipe, label_encoder

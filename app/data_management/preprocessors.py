@@ -1,5 +1,6 @@
 
 import numpy as np, pandas as pd
+import sys
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import label_binarize
 
@@ -129,9 +130,9 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
     
     def transform(self, data):
         if self.target_field in data.columns: 
-            data[self.target_field] = label_binarize(
+            transformed_labels = label_binarize(
                 data[self.target_field], 
                 classes = self.given_classes
             ).flatten()
-        return data
+        return transformed_labels
     
