@@ -11,7 +11,7 @@ TEST_DATA_FPATH = "./inputs/titanic_test.csv"
 MODEL_ARTIFACTS_PATH = "./outputs/artifacts/"
 
 
-def main():     
+def main():
 
     # instantiate schem provider which loads the schema
     data_schema = BinaryClassificationSchema(SCHEMA_FPATH)
@@ -20,11 +20,14 @@ def main():
     train_data = read_data(data_path=TRAIN_DATA_FPATH, data_schema=data_schema)
     # print(train_data.head())
 
-    # preprocessing
+    # create preprocessing pipeline and label encoder
     preprocess_pipeline = get_preprocess_pipeline(data_schema)
-    transformed_data = preprocess_pipeline.fit_transform(train_data.drop(data_schema.id_field, axis=1))  
     label_encoder = get_label_encoder(data_schema)
+
+    # fit preprocessing pipeline and transform data and labels
+    transformed_data = preprocess_pipeline.fit_transform(train_data.drop(data_schema.id_field, axis=1))
     transformed_labels = label_encoder.fit_transform(train_data[[data_schema.target_field]])
+
 
     print("*"*60)
     print("Transformed features:")
@@ -34,9 +37,9 @@ def main():
     print(transformed_labels[:10])
     print("*"*60)
 
-    # save preprocessor
+    # save preprocessing pipeline and label encoder
     save_preprocessor_and_lbl_encoder(preprocess_pipeline, label_encoder, MODEL_ARTIFACTS_PATH)
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

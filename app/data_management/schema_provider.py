@@ -3,24 +3,32 @@ import json
 
 
 class BinaryClassificationSchema:
-    """Class for reading binary classification schema file"""
+    """
+    A class for loading a binary classification schema file and providing methods to access
+    the fields defined in the schema.
+    """
 
     def __init__(self, schema_fpath: str) -> None:
         """
-        Initializes a new instance of the `BinaryClassificationSchema` class.
+        Initializes a new instance of the `BinaryClassificationSchema` class
+        and loads the schema file.
 
-        :param schema_fpath: path to the binary classification schema file
+        Args:
+            schema_fpath (str): The path to the binary classification schema file.
         """
         self.schema = json.load(open(schema_fpath))
-        self._numeric_features = self._get_features("NUMERIC", "INT", "REAL")
-        self._categorical_features = self._get_features("CATEGORICAL")
+        self._numeric_features = self._get_features_of_type("NUMERIC", "INT", "REAL")
+        self._categorical_features = self._get_features_of_type("CATEGORICAL")
 
-    def _get_features(self, *types):
+    def _get_features_of_type(self, *types) -> list[str]:
         """
         Returns the feature names of the specified data type.
 
-        :param types: data types of the features
-        :return: list of feature names
+        Args:
+            *types (str): The data types of the features.
+
+        Returns:
+            list[str]: The list of feature names.
         """
         fields = self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["predictorFields"]
         return [f["fieldName"] for f in fields if f["dataType"] in types]
@@ -30,7 +38,8 @@ class BinaryClassificationSchema:
         """
         Gets the name of the ID field.
 
-        :return: name of the ID field
+        Returns:
+            str: The name of the ID field.
         """
         return self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["idField"]
 
@@ -39,7 +48,8 @@ class BinaryClassificationSchema:
         """
         Gets the name of the target field.
 
-        :return: name of the target field
+        Returns:
+            str: The name of the target field.
         """
         return self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["targetField"]
 
@@ -48,7 +58,8 @@ class BinaryClassificationSchema:
         """
         Gets the name of the target class.
 
-        :return: name of the target class
+        Returns:
+            str: The name of the target class.
         """
         return self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["targetClass"]
 
@@ -57,7 +68,8 @@ class BinaryClassificationSchema:
         """
         Gets the names of the numeric features.
 
-        :return: list of numeric feature names
+        Returns:
+            list[str]: The list of numeric feature names.
         """
         return self._numeric_features
 
@@ -66,7 +78,8 @@ class BinaryClassificationSchema:
         """
         Gets the names of the categorical features.
 
-        :return: list of categorical feature names
+        Returns:
+            list[str]: The list of categorical feature names.
         """
         return self._categorical_features
 
@@ -75,7 +88,8 @@ class BinaryClassificationSchema:
         """
         Gets the names of all the features.
 
-        :return: list of all feature names
+        Returns:
+            list[str]: The list of all feature names.
         """
         return self.numeric_features + self.categorical_features
 
@@ -84,7 +98,8 @@ class BinaryClassificationSchema:
         """
         Gets the names of all the fields.
 
-        :return: list of all field names
+        Returns:
+            list[str]: The list of all field names.
         """
         return [self.id_field, self.target_field] + self.features
 

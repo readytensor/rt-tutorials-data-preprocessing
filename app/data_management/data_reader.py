@@ -8,17 +8,20 @@ def read_data(data_path: str, data_schema: BinaryClassificationSchema) -> pd.Dat
 
     data = pd.read_csv(data_path)
 
-    # cast id field to be string
+    # Cast id field to string.
     data[data_schema.id_field] = data[data_schema.id_field].astype(str)
-    # cast target field to be string
+    
+    # Cast target field to string.
     data[data_schema.target_field] = data[data_schema.target_field].astype(str)
-    # cast categorical features to be string 
-    for c in data_schema.categorical_features: 
-        if c in data.columns: 
+    
+    # Cast categorical features to string.
+    for c in data_schema.categorical_features:
+        if c in data.columns:
             data[c] = data[c].astype(str)
-    # cast numeric features to be floats
-    for c in data_schema.numeric_features: 
-        if c in data.columns: 
+    
+    # Cast numeric features to float.
+    for c in data_schema.numeric_features:
+        if c in data.columns:
             data[c] = data[c].astype(np.float32)
     
     return data
