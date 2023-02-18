@@ -147,6 +147,7 @@ def load_preprocessor_and_lbl_encoder(file_path):
 
     Args:
         file_path: The file path of the directory containing the saved preprocessor and label encoder objects.
+    
     Returns: 
         A tuple containing the loaded preprocessor and label encoder objects.
     """
