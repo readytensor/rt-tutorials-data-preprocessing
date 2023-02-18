@@ -145,8 +145,10 @@ def load_preprocessor_and_lbl_encoder(file_path):
     """
     Load the preprocessor and label encoder objects from disk.
 
-    :param file_path: The file path of the directory containing the saved preprocessor and label encoder objects.
-    :return: A tuple containing the loaded preprocessor and label encoder objects.
+    Args:
+        file_path: The file path of the directory containing the saved preprocessor and label encoder objects.
+    Returns: 
+        A tuple containing the loaded preprocessor and label encoder objects.
     """
     preprocess_pipe = joblib.load(os.path.join(file_path, PREPROCESSOR_FNAME))
     label_encoder = joblib.load(os.path.join(file_path, LABEL_ENCODER_FNAME))

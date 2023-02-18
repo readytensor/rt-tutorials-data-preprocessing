@@ -4,7 +4,16 @@ from data_management.schema_provider import BinaryClassificationSchema
 
 
 def read_data(data_path: str, data_schema: BinaryClassificationSchema) -> pd.DataFrame:
-    """reads data and casts fields to be of expected type as per the schema """ 
+    """
+    Reads data and casts fields to the expected type as per the provided schema.
+
+    Args:
+        data_path (str): The path to the training data file.
+        bc_schema (BinaryClassificationSchema): The schema provider object.
+
+    Returns:
+        pd.DataFrame: The training data as a pandas DataFrame with casted field types.
+    """
 
     data = pd.read_csv(data_path)
 

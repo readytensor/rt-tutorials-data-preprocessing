@@ -10,12 +10,11 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         Initializes a new instance of the `ColumnSelector` class.
 
-        Parameters:
-        -----------
-        columns : list of str
-            List of column names to select or drop.
-        selector_type : str, optional (default='keep')
-            Type of selection. Must be either 'keep' or 'drop'.
+        Args:
+            columns : list of str
+                List of column names to select or drop.
+            selector_type : str, optional (default='keep')
+                Type of selection. Must be either 'keep' or 'drop'.
         """
         self.columns = columns
         assert selector_type in ["keep", "drop"]
@@ -25,11 +24,12 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         Fits the transformer.
 
-        Parameters:
-        -----------
-        :X: pandas DataFrame
-        :y: unused
-        :return: self
+        Args:
+            X: pandas DataFrame - the input data
+            y: unused
+
+        Returns:
+            self
         """
         return self
 
@@ -37,15 +37,11 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         Applies the column selection.
 
-        Parameters:
-        -----------
-        X : pandas.DataFrame
-            The input data.
+        Args:
+            X : pandas.DataFrame - The input data.
 
         Returns:
-        --------
-        pandas.DataFrame
-            The transformed data.
+            pandas.DataFrame: The transformed data.
         """
         if self.selector_type == 'keep':
             retained_cols = [col for col in X.columns if col in self.columns]
@@ -62,14 +58,13 @@ class ValueClipper(BaseEstimator, TransformerMixin):
         """
         Initializes a new instance of the `ValueClipper` class.
 
-        Parameters:
-        -----------
-        fields_to_clip : list of str
-            List of field names to clip.
-        min_val : float or None, optional (default=None)
-            Minimum value of the range. If None, the values are not clipped from the lower end.
-        max_val : float or None, optional (default=None)
-            Maximum value of the range. If None, the values are not clipped from the upper end.
+        Args:
+            fields_to_clip : list of str
+                List of field names to clip.
+            min_val : float or None, optional (default=None)
+                Minimum value of the range. If None, the values are not clipped from the lower end.
+            max_val : float or None, optional (default=None)
+                Maximum value of the range. If None, the values are not clipped from the upper end.
 
         """
         super().__init__()
@@ -81,31 +76,25 @@ class ValueClipper(BaseEstimator, TransformerMixin):
         """
         Fit function that does nothing.
 
-        Parameters:
-        -----------
-        data : pandas.DataFrame
-            The input data.
+        Args:
+            data : pandas.DataFrame
+                The input data.
 
         Returns:
-        --------
-        ValueClipper
-            This instance of the ValueClipper class.
+            ValueClipper - This instance of the ValueClipper class.
         """
         return self
 
     def transform(self, data):
         """
         Clips the values of the specified fields to the specified range.
-
-        Parameters:
-        -----------
-        data : pandas.DataFrame
-            The input data.
+        
+        Args:
+            data: pandas.DataFrame - The input data.
 
         Returns:
-        --------
-        pandas.DataFrame
-            The transformed data.
+            pandas.DataFrame
+                The transformed data.
 
         """
         for field in self.fields_to_clip:
@@ -121,13 +110,12 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
     def __init__(self, cat_vars, threshold):
         """
         Initializes a new instance of the `MostFrequentImputer` class.
-
-        Parameters:
-        -----------
-        cat_vars : list of str
-            List of the categorical features to impute.
-        threshold : float, optional (default=1)
-            The minimum proportion of the samples that must contain a missing value for the imputation to be performed.
+        
+        Args:
+            cat_vars : list of str
+                List of the categorical features to impute.
+            threshold : float, optional (default=1)
+                The minimum proportion of the samples that must contain a missing value for the imputation to be performed.
 
         """
         self.cat_vars = cat_vars
@@ -138,9 +126,11 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
         """
         Fits the transformer.
 
-        :param X: pandas DataFrame
-        :param y: unused
-        :return: self
+        Args:
+            X: pandas DataFrame - the input data
+            y: unused
+        Returns:
+            self
         """
         self.fitted_cat_vars = [
             var for var in self.cat_vars
@@ -154,11 +144,11 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
         """
         Transform the data by imputing the most frequent class for the fitted categorical features.
 
-        :param X: pandas DataFrame
-            The data to transform.
-        :param y: unused
-        :return: pandas DataFrame
-            The transformed data with the most frequent class imputed for the fitted categorical features.
+        Args:
+            X: pandas DataFrame - The data to transform.
+            y: unused
+        Returns:
+            pandas DataFrame - The transformed data with the most frequent class imputed for the fitted categorical features.
         """
         for col in self.fill_vals:
             if col in X.columns:
@@ -172,12 +162,11 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         """
         Initializes a new instance of the `OneHotEncoderMultipleCols` class.
 
-        Parameters:
-        -----------
-        ohe_columns : list of str
-            List of the categorical features to one-hot encode.
-        max_num_categories : int, optional (default=10)
-            Maximum number of categories to include for each feature.
+        Args:
+            ohe_columns : list of str
+                List of the categorical features to one-hot encode.
+            max_num_categories : int, optional (default=10)
+                Maximum number of categories to include for each feature.
         """
         super().__init__()
         self.ohe_columns = ohe_columns
@@ -188,15 +177,13 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         """
         Learns the values to be used for one-hot encoding from the input data X.
 
-        Parameters:
-        -----------
-        X : pandas DataFrame
-            Data to learn one-hot encoding from.
-        y : unused
+        Args:
+            X : pandas DataFrame
+                Data to learn one-hot encoding from.
+            y : unused
 
         Returns:
-        --------
-        self : OneHotEncoderMultipleCols
+            self : OneHotEncoderMultipleCols
         """
         for col in self.ohe_columns:
             if col in X.columns:
@@ -210,15 +197,12 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         """
         Encodes the input data using the learned values.
 
-        Parameters:
-        -----------
-        data : pandas DataFrame
-            Data to one-hot encode.
+        Args:
+            data : pandas DataFrame - Data to one-hot encode.
 
         Returns:
-        --------
-        transformed_data : pandas DataFrame
-            One-hot encoded data.
+            transformed_data : pandas DataFrame
+                One-hot encoded data.
         """
         data.reset_index(inplace=True, drop=True)
         df_list = [data]
@@ -266,10 +250,10 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         Fit the transformer.
 
-        Parameters:
-        -----------
-        :data: pandas DataFrame
-        :return: self
+        Args:
+            data: pandas DataFrame
+        Returns:
+            self
         """
         # grab the two classes
         given_classes = data[self.target_field].drop_duplicates().tolist()
@@ -283,10 +267,10 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         Transform the data.
 
-        Parameters:
-        -----------
-        :data: pandas DataFrame
-        :return: pandas DataFrame
+        Args:
+            data: pandas DataFrame - data to transform
+        Returns:
+            pandas DataFrame - transformed data
         """
         if self.target_field in data.columns:
             data[self.target_field] = label_binarize(
