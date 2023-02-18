@@ -18,7 +18,6 @@ def main():
 
     # load train data
     train_data = read_data(data_path=TRAIN_DATA_FPATH, data_schema=data_schema)
-    # print(train_data.head())
 
     # create preprocessing pipeline and label encoder
     preprocess_pipeline = get_preprocess_pipeline(data_schema)
