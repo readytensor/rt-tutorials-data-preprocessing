@@ -201,8 +201,7 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
             data : pandas DataFrame - Data to one-hot encode.
 
         Returns:
-            transformed_data : pandas DataFrame
-                One-hot encoded data.
+            transformed_data : pandas DataFrame - One-hot encoded data.
         """
         data.reset_index(inplace=True, drop=True)
         df_list = [data]
@@ -251,7 +250,7 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         Fit the transformer.
 
         Args:
-            data: pandas DataFrame
+            data: pandas DataFrame - input data
         Returns:
             self
         """

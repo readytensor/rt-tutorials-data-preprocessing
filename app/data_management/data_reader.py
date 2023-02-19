@@ -9,7 +9,7 @@ def read_data(data_path: str, data_schema: BinaryClassificationSchema) -> pd.Dat
 
     Args:
         data_path (str): The path to the training data file.
-        bc_schema (BinaryClassificationSchema): The schema provider object.
+        data_schema (BinaryClassificationSchema): The schema provider object.
 
     Returns:
         pd.DataFrame: The training data as a pandas DataFrame with casted field types.
