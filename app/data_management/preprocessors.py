@@ -272,6 +272,7 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
             pandas DataFrame - transformed data
         """
         if self.target_field in data.columns:
+            data = data.copy() 
             data[self.target_field] = label_binarize(
                 data[self.target_field],
                 classes = self.given_classes

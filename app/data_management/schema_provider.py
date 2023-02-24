@@ -1,5 +1,6 @@
 
 import json
+from typing import List
 
 
 class BinaryClassificationSchema:
@@ -20,7 +21,7 @@ class BinaryClassificationSchema:
         self._numeric_features = self._get_features_of_type("NUMERIC", "INT", "REAL")
         self._categorical_features = self._get_features_of_type("CATEGORICAL")
 
-    def _get_features_of_type(self, *types) -> list[str]:
+    def _get_features_of_type(self, *types) -> List[str]:
         """
         Returns the feature names of the specified data type.
 
@@ -28,7 +29,7 @@ class BinaryClassificationSchema:
             *types (str): The data types of the features.
 
         Returns:
-            list[str]: The list of feature names.
+            List(str): The list of feature names.
         """
         fields = self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["predictorFields"]
         return [f["fieldName"] for f in fields if f["dataType"] in types]
@@ -64,42 +65,42 @@ class BinaryClassificationSchema:
         return self.schema["inputDatasets"]["binaryClassificationBaseMainInput"]["targetClass"]
 
     @property
-    def numeric_features(self) -> list[str]:
+    def numeric_features(self) -> List[str]:
         """
         Gets the names of the numeric features.
 
         Returns:
-            list[str]: The list of numeric feature names.
+            List[str]: The list of numeric feature names.
         """
         return self._numeric_features
 
     @property
-    def categorical_features(self) -> list[str]:
+    def categorical_features(self) -> List[str]:
         """
         Gets the names of the categorical features.
 
         Returns:
-            list[str]: The list of categorical feature names.
+            List[str]: The list of categorical feature names.
         """
         return self._categorical_features
 
     @property
-    def features(self) -> list[str]:
+    def features(self) -> List[str]:
         """
         Gets the names of all the features.
 
         Returns:
-            list[str]: The list of all feature names.
+            List[str]: The list of all feature names.
         """
         return self.numeric_features + self.categorical_features
 
     @property
-    def all_fields(self) -> list[str]:
+    def all_fields(self) -> List[str]:
         """
         Gets the names of all the fields.
 
         Returns:
-            list[str]: The list of all field names.
+            List[str]: The list of all field names.
         """
         return [self.id_field, self.target_field] + self.features
 
