@@ -16,8 +16,8 @@ The `app/` folder in the repository contains the following key folders/sub-folde
 ## Usage
 
 - Create your virtual environment and install dependencies listed in `requirements.txt`.
-- Place the train data file in csv format in the path `./app/inputs/`
-- Place the schema file in JSON format in the path `./app/inputs/`. The schema conforms to Ready Tensor specification for the **Binary Classification-Base** category.
+- Place the train data file in csv format in the path `./app/inputs/data/training/`
+- Place the schema file in JSON format in the path `./app/inputs/data_config/`. The schema conforms to Ready Tensor specification for the **Binary Classification-Base** category.
 - Update the file paths in the `run_script.py` file in `./app/` and run the script as follows.
 
 The script will print top 10 rows of the transformed data and also save the preprocessing pipeline in the path `./app/outputs/artifacts/`.
