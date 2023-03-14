@@ -8,9 +8,10 @@ The `app/` folder in the repository contains the following key folders/sub-folde
 
 - `data_management/` will all files related to handling and preprocessing data.
 - `inputs/` contains the input files related to the _titanic_ dataset.
-- `outputs/` is a folder to save model artifacts and other result files. Within this folder:
+- `model/` is a folder to save model artifacts and other assets specific to the trained model. Within this folder:
   - `artifacts/` is location to save model artifacts (i.e. the saved model including the trained preprocessing pipeline)
-  - `outputs/` is used to contain the predictions or other results files (functionality not included in this repo)
+- `paths.py`: script contains variables which represent various paths to be used in the repository.
+- `run_script.py`: an example script that shows the usage of the preprocessing pipeline and processed outputs.
 
 ## Usage
 

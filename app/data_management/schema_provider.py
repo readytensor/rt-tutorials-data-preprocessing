@@ -1,5 +1,3 @@
-
-import json
 from typing import List
 
 
@@ -9,15 +7,15 @@ class BinaryClassificationSchema:
     the fields defined in the schema.
     """
 
-    def __init__(self, schema_fpath: str) -> None:
+    def __init__(self, schema_dict: dict) -> None:
         """
         Initializes a new instance of the `BinaryClassificationSchema` class
         and loads the schema file.
 
         Args:
-            schema_fpath (str): The path to the binary classification schema file.
+            schema_dict (dict): The python dictionary of schema.
         """
-        self.schema = json.load(open(schema_fpath))
+        self.schema = schema_dict
         self._numeric_features = self._get_features_of_type("NUMERIC", "INT", "REAL")
         self._categorical_features = self._get_features_of_type("CATEGORICAL")
 
@@ -103,7 +101,3 @@ class BinaryClassificationSchema:
             List[str]: The list of all field names.
         """
         return [self.id_field, self.target_field] + self.features
-
-
-    def __str__(self): 
-        return str(self.schema)
