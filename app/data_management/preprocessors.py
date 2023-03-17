@@ -1,158 +1,329 @@
-import os
-import joblib
-from sklearn.pipeline import Pipeline
-from feature_engine.wrappers import SklearnTransformerWrapper
-from feature_engine.encoding import RareLabelEncoder
-from feature_engine.imputation import (
-    AddMissingIndicator,
-    CategoricalImputer,
-    MeanMedianImputer,
-)
-from sklearn.preprocessing import StandardScaler
-
-import data_management.preprocessors as preprocessors
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import label_binarize
 
 
-PREPROCESSOR_FNAME = "preprocessor.save"
-LABEL_ENCODER_FNAME = "label_encoder.save"
+class ColumnSelector(BaseEstimator, TransformerMixin):
+    """Selects or drops specified columns."""
+    def __init__(self, columns, selector_type='keep'):
+        """
+        Initializes a new instance of the `ColumnSelector` class.
 
-def get_preprocess_pipeline(data_schema):
-    """Create a preprocessor pipeline to transform data as defined by data_schema.
+        Args:
+            columns : list of str
+                List of column names to select or drop.
+            selector_type : str, optional (default='keep')
+                Type of selection. Must be either 'keep' or 'drop'.
+        """
+        self.columns = columns
+        assert selector_type in ["keep", "drop"]
+        self.selector_type = selector_type
 
-    Args:
-        data_schema: A Schema instance describing the data.
+    def fit(self, X, y=None):
+        """
+        Fits the transformer.
 
-    Returns:
-        A SciKit-Learn Pipeline to preprocess data.
-    """
-    pipeline = Pipeline(
-        [
-            (
-                # keep only the columns that were defined in the schema
-                "column_selector",
-                preprocessors.ColumnSelector(columns=data_schema.features),
-            ),
-            (
-                # add missing indicator for nas in numerical features
-                "missing_indicator_numeric",
-                AddMissingIndicator(variables=data_schema.numeric_features),
-            ),
-            (
-                # impute numerical na with the mean
-                "mean_imputer_numeric",
-                MeanMedianImputer(imputation_method="mean",variables=data_schema.numeric_features),
-            ),
-            (
-                # standard scale the numerical features
-                "standard_scaler",
-                SklearnTransformerWrapper(
-                    StandardScaler(), variables=data_schema.numeric_features
-                ),
-            ),
-            (
-                # clip the standardized values to +/- 4.0, corresponding to +/- 4 std dev.
-                "outlier_value_clipper",
-                preprocessors.ValueClipper(
-                    fields_to_clip=data_schema.numeric_features,
-                    min_val=-4.0,  # - 4 std dev
-                    max_val=4.0,  # + 4 std dev
-                ),
-            ),
-            (
-                # impute categorical na with most frequent category, when missing values are rare (under a threshold)
-                "cat_most_frequent_imputer",
-                preprocessors.MostFrequentImputer(
-                    cat_vars=data_schema.categorical_features,
-                    threshold=0.1,
-                ),
-            ),
-            (
-                 # impute categorical na with string 'missing'
-                "cat_imputer_with_missing_tag",
-                preprocessors.FeatureEngineCategoricalTransformerWrapper(
-                    transformer=CategoricalImputer,
-                    cat_vars=data_schema.categorical_features,
-                    imputation_method="missing",
-                ),
-            ),
-            (
-                "rare_label_encoder",
-                preprocessors.FeatureEngineCategoricalTransformerWrapper(
-                    transformer=RareLabelEncoder,
-                    cat_vars=data_schema.categorical_features,
-                    tol=0.03,
-                    n_categories=1,
-                ),
-            ),
-            (
-                # one-hot encode cat vars
-                "one_hot_encoder",
-                preprocessors.OneHotEncoderMultipleCols(
-                    ohe_columns=data_schema.categorical_features,
-                ),
-            ),
-            (
-                # drop the original cat vars, we keep the ohe variables
-                "cat_var_dropper",
-                preprocessors.ColumnSelector(
-                    columns=data_schema.categorical_features,
-                    selector_type="drop"
-                ),
-            )
-        ]
-    )
-    return pipeline
+        Args:
+            X: pandas DataFrame - the input data
+            y: unused
 
-def get_label_encoder(data_schema):
-    """Create a custom label binarizer to encode the target variable.
+        Returns:
+            self
+        """
+        return self
 
-    Args:
-        data_schema: A Schema instance describing the data.
+    def transform(self, X):
+        """
+        Applies the column selection.
 
-    Returns:
-        A CustomLabelBinarizer to encode the target variable.
-    """
-    return preprocessors.CustomLabelBinarizer(
-        target_field=data_schema.target_field,
-        target_class=data_schema.target_class,
-    )
+        Args:
+            X : pandas.DataFrame - The input data.
 
-def get_class_names(label_encoder):
-    """Get the names of the classes for the target variable.
-
-    Args:
-        label_encoder: A CustomLabelBinarizer instance.
-
-    Returns:
-        A list of class names for the target variable.
-    """
-    class_names = label_encoder.given_classes
-    return class_names
+        Returns:
+            pandas.DataFrame: The transformed data.
+        """
+        if self.selector_type == 'keep':
+            retained_cols = [col for col in X.columns if col in self.columns]
+            X = X[retained_cols].copy()
+        elif self.selector_type == 'drop':
+            dropped_cols = [col for col in X.columns if col in self.columns]
+            X = X.drop(dropped_cols, axis=1)
+        return X
 
 
-def save_preprocessor_and_lbl_encoder(preprocess_pipe, label_encoder, file_path):
-    """Save the preprocessor pipeline and label encoder to disk.
+class ValueClipper(BaseEstimator, TransformerMixin):
+    """Clips the values of the specified fields to a specified range."""
+    def __init__(self, fields_to_clip, min_val, max_val) -> None:
+        """
+        Initializes a new instance of the `ValueClipper` class.
 
-    Args:
-        preprocess_pipe: A SciKit-Learn Pipeline instance.
-        label_encoder: A CustomLabelBinarizer instance.
-        file_path: A path to the directory to save the preprocessor and label encoder.
-    """
-    joblib.dump(preprocess_pipe, os.path.join(file_path, PREPROCESSOR_FNAME))
-    joblib.dump(label_encoder, os.path.join(file_path, LABEL_ENCODER_FNAME))
-    return
+        Args:
+            fields_to_clip : list of str
+                List of field names to clip.
+            min_val : float or None, optional (default=None)
+                Minimum value of the range. If None, the values are not clipped from the lower end.
+            max_val : float or None, optional (default=None)
+                Maximum value of the range. If None, the values are not clipped from the upper end.
+
+        """
+        super().__init__()
+        self.fields_to_clip = fields_to_clip
+        self.min_val = min_val
+        self.max_val = max_val
+
+    def fit(self, data):
+        """
+        Fit function that does nothing.
+
+        Args:
+            data : pandas.DataFrame
+                The input data.
+
+        Returns:
+            ValueClipper - This instance of the ValueClipper class.
+        """
+        return self
+
+    def transform(self, data):
+        """
+        Clips the values of the specified fields to the specified range.
+        
+        Args:
+            data: pandas.DataFrame - The input data.
+
+        Returns:
+            pandas.DataFrame
+                The transformed data.
+
+        """
+        for field in self.fields_to_clip:
+            if self.min_val is not None:
+                data[field] = data[field].clip(lower=self.min_val)
+            if self.max_val is not None:
+                data[field] = data[field].clip(upper=self.max_val)
+        return data
 
 
-def load_preprocessor_and_lbl_encoder(file_path):
-    """
-    Load the preprocessor and label encoder objects from disk.
+class MostFrequentImputer(BaseEstimator, TransformerMixin):
+    """Imputes missing values using the most frequently observed class for categorical features when missing values are rare (under 10% of samples). """
+    def __init__(self, cat_vars, threshold):
+        """
+        Initializes a new instance of the `MostFrequentImputer` class.
+        
+        Args:
+            cat_vars : list of str
+                List of the categorical features to impute.
+            threshold : float, optional (default=1)
+                The minimum proportion of the samples that must contain a missing value for the imputation to be performed.
 
-    Args:
-        file_path: The file path of the directory containing the saved preprocessor and label encoder objects.
+        """
+        self.cat_vars = cat_vars
+        self.threshold = threshold
+        self.fill_vals = {}
+
+    def fit(self, X, y=None):
+        """
+        Fits the transformer.
+
+        Args:
+            X: pandas DataFrame - the input data
+            y: unused
+        Returns:
+            self
+        """
+        if self.cat_vars and len(self.cat_vars) > 0:
+            self.fitted_cat_vars = [
+                var for var in self.cat_vars
+                if var in X.columns and X[var].isnull().mean() <  self.threshold ]
+
+            for col in self.fitted_cat_vars:
+                self.fill_vals[col] = X[col].value_counts().index[0]
+        return self
+
+    def transform(self, X, y=None):
+        """
+        Transform the data by imputing the most frequent class for the fitted categorical features.
+
+        Args:
+            X: pandas DataFrame - The data to transform.
+            y: unused
+        Returns:
+            pandas DataFrame - The transformed data with the most frequent class imputed for the fitted categorical features.
+        """
+        for col in self.fill_vals:
+            if col in X.columns:
+                X[col] = X[col].fillna(self.fill_vals[col])
+        return X
+
+
+class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self, transformer, cat_vars, **kwargs):
+        """
+        Wrapper class that fits/transforms using given transformer if there are categorical variables present, else does nothing. 
+        
+        Args:
+            transformer : feature-engine transformer class
+                feature-engine transformer to apply on categorical features.
+            cat_vars : list of str
+                List of the categorical features to impute.
+            **kwags : any
+                Additional key-value pairs for arguments accepted by the given transformer
+
+        """
+        self.cat_vars = cat_vars
+        self.transformer = transformer(variables = cat_vars, **kwargs)
+
+    def fit(self, X, y=None): 
+        """
+        Fits the transformer if categorical variables are present.
+
+        Args:
+            X: pandas DataFrame - the input data
+            y: unused
+        Returns:
+            self
+        """
+        if len(self.cat_vars) > 0:            
+            self.transformer.fit(X[self.cat_vars], y)
+        return self
     
-    Returns: 
-        A tuple containing the loaded preprocessor and label encoder objects.
-    """
-    preprocess_pipe = joblib.load(os.path.join(file_path, PREPROCESSOR_FNAME))
-    label_encoder = joblib.load(os.path.join(file_path, LABEL_ENCODER_FNAME))
-    return preprocess_pipe, label_encoder
+    def transform(self, X, y=None):
+        """
+        Transform the data if categorical variables are present..
+
+        Args:
+            X: pandas DataFrame - The data to transform.
+            y: unused
+        Returns:
+            pandas DataFrame - The transformed data with the fitted categorical features.
+        """
+        if len(self.cat_vars) > 0:
+            X[self.cat_vars] = self.transformer.transform(X[self.cat_vars])
+        return X
+
+
+class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
+    """ Encodes categorical features using one-hot encoding. """
+    def __init__(self, ohe_columns, max_num_categories=10):
+        """
+        Initializes a new instance of the `OneHotEncoderMultipleCols` class.
+
+        Args:
+            ohe_columns : list of str
+                List of the categorical features to one-hot encode.
+            max_num_categories : int, optional (default=10)
+                Maximum number of categories to include for each feature.
+        """
+        super().__init__()
+        self.ohe_columns = ohe_columns
+        self.max_num_categories = max_num_categories
+        self.top_cat_by_ohe_col = {}
+
+    def fit(self, X, y=None):
+        """
+        Learns the values to be used for one-hot encoding from the input data X.
+
+        Args:
+            X : pandas DataFrame
+                Data to learn one-hot encoding from.
+            y : unused
+
+        Returns:
+            self : OneHotEncoderMultipleCols
+        """
+        for col in self.ohe_columns:
+            if col in X.columns:
+                self.top_cat_by_ohe_col[col] = [
+                    cat for cat in X[col].value_counts()\
+                        .sort_values(ascending = False).head(self.max_num_categories).index
+                    ]
+        return self
+
+    def transform(self, data):
+        """
+        Encodes the input data using the learned values.
+
+        Args:
+            data : pandas DataFrame - Data to one-hot encode.
+
+        Returns:
+            transformed_data : pandas DataFrame - One-hot encoded data.
+        """
+        if self.ohe_columns and len(self.ohe_columns) > 0:
+            data.reset_index(inplace=True, drop=True)
+            df_list = [data]
+            cols_list = list(data.columns)
+            for col in self.ohe_columns:
+                if len(self.top_cat_by_ohe_col[col]) > 0:
+                    if col in data.columns:
+                        for cat in self.top_cat_by_ohe_col[col]:
+                            col_name = col + '_' + cat
+                            vals = np.where(data[col] == cat, 1, 0)
+                            df = pd.DataFrame(vals, columns=[col_name])
+                            df_list.append(df)
+
+                            cols_list.append(col_name)
+                    else:
+                        raise Exception(f'''
+                            Error: Fitted one-hot-encoded column {col}
+                            does not exist in dataframe given for transformation.
+                            This will result in a shape mismatch for train/prediction job.
+                            ''')
+            transformed_data = pd.concat(df_list, axis=1, ignore_index=True)
+            transformed_data.columns =  cols_list
+            return transformed_data
+        else: 
+            return data
+
+
+class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
+    """ Binarizes the target variable to 0/1 values. """
+    def __init__(self, target_field, target_class) -> None:
+        """
+        Initializes a new instance of the `CustomLabelBinarizer` class.
+
+        Parameters:
+        -----------
+        :target_field: str
+            Name of the target field.
+        :target_class: str
+            Name of the target class.
+        """
+        super().__init__()
+        self.target_field = target_field
+        self.target_class = target_class
+        self.given_classes = None
+
+    def fit(self, data):
+        """
+        Fit the transformer.
+
+        Args:
+            data: pandas DataFrame - input data
+        Returns:
+            self
+        """
+        # grab the two classes
+        given_classes = data[self.target_field].drop_duplicates().tolist()
+        # sort so that the target class is last
+        given_classes.sort(key = lambda k: k == self.target_class)
+        # save for transformation
+        self.given_classes = given_classes
+        return self
+
+    def transform(self, data):
+        """
+        Transform the data.
+
+        Args:
+            data: pandas DataFrame - data to transform
+        Returns:
+            pandas DataFrame - transformed data
+        """
+        if self.target_field in data.columns:
+            data[self.target_field] = label_binarize(
+                data[self.target_field],
+                classes = self.given_classes
+            ).flatten()
+        return data
