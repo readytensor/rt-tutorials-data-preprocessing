@@ -69,17 +69,19 @@ def get_preprocess_pipeline(data_schema):
             (
                  # impute categorical na with string 'missing'
                 "cat_imputer_with_missing_tag",
-                CategoricalImputer(
+                preprocessors.FeatureEngineCategoricalTransformerWrapper(
+                    transformer=CategoricalImputer,
+                    cat_vars=data_schema.categorical_features,
                     imputation_method="missing",
-                    variables=data_schema.categorical_features
                 ),
             ),
             (
                 "rare_label_encoder",
-                RareLabelEncoder(
+                preprocessors.FeatureEngineCategoricalTransformerWrapper(
+                    transformer=RareLabelEncoder,
+                    cat_vars=data_schema.categorical_features,
                     tol=0.03,
                     n_categories=1,
-                    variables=data_schema.categorical_features,
                 ),
             ),
             (
