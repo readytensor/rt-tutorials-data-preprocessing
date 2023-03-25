@@ -27,7 +27,6 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         Args:
             X: pandas DataFrame - the input data
             y: unused
-
         Returns:
             self
         """
@@ -39,7 +38,6 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
 
         Args:
             X : pandas.DataFrame - The input data.
-
         Returns:
             pandas.DataFrame: The transformed data.
         """
@@ -50,6 +48,58 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
             dropped_cols = [col for col in X.columns if col in self.columns]
             X = X.drop(dropped_cols, axis=1)
         return X
+
+
+class TypeCaster(BaseEstimator, TransformerMixin):
+    """
+    A custom transformer that casts the specified variables in the input data to a specified data type.
+    """
+
+    def __init__(self, vars, cast_type):
+        """
+        Initializes a new instance of the `TypeCaster` class.
+
+        Args:
+            vars : list
+                List of variable names to be transformed.
+            cast_type : data type
+                Data type to which the specified variables will be cast.
+        """
+        super().__init__()
+        self.vars = vars
+        self.cast_type = cast_type
+
+    def fit(self, X, y=None):
+        """
+        No-op.
+
+        Args:
+            X : pandas DataFrame
+                Input data to be transformed.
+            y : None
+                Not used in this transformer.
+        Returns
+            self : object
+                Returns self.
+        """
+        return self
+
+    def transform(self, data):
+        """
+        Applies the casting to given features in input dataframe.
+
+        Args:
+            data : pandas DataFrame
+                Input data to be transformed.
+        Returns:
+            data : pandas DataFrame
+                Transformed data.
+        """
+        data = data.copy()
+        applied_cols = [col for col in self.vars if col in data.columns]
+        for var in applied_cols:
+            data[var] = data[var].apply(self.cast_type)
+        return data
 
 
 class ValueClipper(BaseEstimator, TransformerMixin):
@@ -78,8 +128,7 @@ class ValueClipper(BaseEstimator, TransformerMixin):
 
         Args:
             data : pandas.DataFrame
-                The input data.
-
+                The input data. 
         Returns:
             ValueClipper - This instance of the ValueClipper class.
         """
@@ -90,8 +139,8 @@ class ValueClipper(BaseEstimator, TransformerMixin):
         Clips the values of the specified fields to the specified range.
         
         Args:
-            data: pandas.DataFrame - The input data.
-
+            data: pandas.DataFrame 
+                The input data.
         Returns:
             pandas.DataFrame
                 The transformed data.
@@ -127,7 +176,8 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
         Fits the transformer.
 
         Args:
-            X: pandas DataFrame - the input data
+            X: pandas DataFrame 
+                The input data
             y: unused
         Returns:
             self
@@ -146,7 +196,8 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
         Transform the data by imputing the most frequent class for the fitted categorical features.
 
         Args:
-            X: pandas DataFrame - The data to transform.
+            X: pandas DataFrame 
+                The data to transform.
             y: unused
         Returns:
             pandas DataFrame - The transformed data with the most frequent class imputed for the fitted categorical features.
@@ -167,7 +218,7 @@ class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin
                 feature-engine transformer to apply on categorical features.
             cat_vars : list of str
                 List of the categorical features to impute.
-            **kwags : any
+            **kwargs : any
                 Additional key-value pairs for arguments accepted by the given transformer
 
         """
@@ -246,7 +297,6 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
 
         Args:
             data : pandas DataFrame - Data to one-hot encode.
-
         Returns:
             transformed_data : pandas DataFrame - One-hot encoded data.
         """
@@ -321,6 +371,7 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         Returns:
             pandas DataFrame - transformed data
         """
+        data = data.copy()
         if self.target_field in data.columns:
             data[self.target_field] = label_binarize(
                 data[self.target_field],

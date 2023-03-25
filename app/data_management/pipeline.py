@@ -33,6 +33,22 @@ def get_preprocess_pipeline(data_schema):
                 preprocessors.ColumnSelector(columns=data_schema.features),
             ),
             (
+                # cast categorical features, id, and target (if present) to string
+                "string_caster",
+                preprocessors.TypeCaster(
+                    vars=data_schema.categorical_features + [data_schema.id_field , data_schema.target_field],
+                    cast_type=str,
+                ),
+            ),
+            (
+                # cast numerical features to float
+                "float_caster",
+                preprocessors.TypeCaster(
+                    vars=data_schema.numeric_features,
+                    cast_type=float,
+                ),
+            ),
+            (
                 # add missing indicator for nas in numerical features
                 "missing_indicator_numeric",
                 AddMissingIndicator(variables=data_schema.numeric_features),

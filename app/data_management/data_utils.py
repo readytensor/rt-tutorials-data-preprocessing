@@ -1,14 +1,13 @@
 import os
 import json
-import pandas as pd, numpy as np
-from data_management.schema_provider import BinaryClassificationSchema
+import pandas as pd
 
-def read_json_in_directory(directory_path: str) -> dict:
+def read_json_in_directory(file_dir_path: str) -> dict:
     """
     Reads a JSON file in the given directory path as a dictionary and returns the dictionary.
     
     Args:
-    - directory_path (str): The path to the directory containing the JSON file.
+    - file_dir_path (str): The path to the directory containing the JSON file.
     
     Returns:
     - dict: The contents of the JSON file as a dictionary.
@@ -16,7 +15,7 @@ def read_json_in_directory(directory_path: str) -> dict:
     Raises:
     - ValueError: If no JSON file is found in the directory or if multiple JSON files are found in the directory.
     """
-    json_files = [file for file in os.listdir(directory_path) if file.endswith('.json')]
+    json_files = [file for file in os.listdir(file_dir_path) if file.endswith('.json')]
     
     if not json_files:
         raise ValueError('No JSON file found in directory')
@@ -24,18 +23,18 @@ def read_json_in_directory(directory_path: str) -> dict:
     if len(json_files) > 1:
         raise ValueError('Multiple JSON files found in directory')
     
-    json_file_path = os.path.join(directory_path, json_files[0])
+    json_file_path = os.path.join(file_dir_path, json_files[0])
     with open(json_file_path, 'r') as f:
         data = json.load(f)
     return data
 
 
-def read_csv_in_directory(directory_path: str) -> pd.DataFrame:
+def read_csv_in_directory(file_dir_path: str) -> pd.DataFrame:
     """
     Reads a CSV file in the given directory path as a pandas dataframe and returns the dataframe.
     
     Args:
-    - directory_path (str): The path to the directory containing the CSV file.
+    - file_dir_path (str): The path to the directory containing the CSV file.
     
     Returns:
     - pd.DataFrame: The pandas dataframe containing the data from the CSV file.
@@ -43,48 +42,30 @@ def read_csv_in_directory(directory_path: str) -> pd.DataFrame:
     Raises:
     - ValueError: If no CSV file is found in the directory or if multiple CSV files are found in the directory.
     """
-    csv_files = [file for file in os.listdir(directory_path) if file.endswith('.csv')]
+    csv_files = [file for file in os.listdir(file_dir_path) if file.endswith('.csv')]
     
     if not csv_files:
-        raise ValueError('No CSV file found in directory')
+        raise ValueError(f'No CSV file found in directory {file_dir_path}')
     
     if len(csv_files) > 1:
-        raise ValueError('Multiple CSV files found in directory')
+        raise ValueError(f'Multiple CSV files found in directory {file_dir_path}.')
     
-    csv_file_path = os.path.join(directory_path, csv_files[0])
+    csv_file_path = os.path.join(file_dir_path, csv_files[0])
     df = pd.read_csv(csv_file_path)
     return df
 
 
-def read_data(data_dirpath: str, data_schema: BinaryClassificationSchema) -> pd.DataFrame:
+def save_csv_to_directory(df: pd.DataFrame, file_dir_path: str, file_name: str) -> None:
     """
-    Reads data and casts fields to the expected type as per the provided schema.
-
+    Saves a pandas dataframe to a CSV file in the given directory path.
+    
     Args:
-        data_dirpath (str): The directory path to the training data.
-        data_schema (BinaryClassificationSchema): The schema provider object.
-
+    - df (pd.DataFrame): The pandas dataframe to be saved.
+    - file_dir_path (str): The path to the directory where the CSV file should be saved.
+    - file_name (str): The name of the CSV file.
+    
     Returns:
-        pd.DataFrame: The training data as a pandas DataFrame with casted field types.
+    - None
     """
-
-    data = read_csv_in_directory(data_dirpath)
-
-    # Cast id field to string
-    data[data_schema.id_field] = data[data_schema.id_field].astype(str)
-    
-    # Cast target field to string
-    if data_schema.target_field in data.columns:
-        data[data_schema.target_field] = data[data_schema.target_field].astype(str)
-    
-    # Cast categorical features to string
-    for c in data_schema.categorical_features:
-        if c in data.columns:
-            data[c] = data[c].astype(str)
-    
-    # Cast numeric features to float
-    for c in data_schema.numeric_features:
-        if c in data.columns:
-            data[c] = data[c].astype(np.float32)
-    
-    return data
+    csv_file_path = os.path.join(file_dir_path, file_name)
+    df.to_csv(csv_file_path, index=False, float_format='%.4f')
