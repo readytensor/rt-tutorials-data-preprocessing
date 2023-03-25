@@ -53,19 +53,3 @@ def read_csv_in_directory(file_dir_path: str) -> pd.DataFrame:
     csv_file_path = os.path.join(file_dir_path, csv_files[0])
     df = pd.read_csv(csv_file_path)
     return df
-
-
-def save_csv_to_directory(df: pd.DataFrame, file_dir_path: str, file_name: str) -> None:
-    """
-    Saves a pandas dataframe to a CSV file in the given directory path.
-    
-    Args:
-    - df (pd.DataFrame): The pandas dataframe to be saved.
-    - file_dir_path (str): The path to the directory where the CSV file should be saved.
-    - file_name (str): The name of the CSV file.
-    
-    Returns:
-    - None
-    """
-    csv_file_path = os.path.join(file_dir_path, file_name)
-    df.to_csv(csv_file_path, index=False, float_format='%.4f')
