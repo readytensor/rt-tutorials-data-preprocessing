@@ -22,7 +22,7 @@ MODEL_ARTIFACTS_PATH = os.path.join(MODEL_PATH, "artifacts")
 
 # Path to outputs 
 OUTPUT_DIR = os.path.join(CURRENT_DIR, "outputs")
-# Path to errors directory inside outputs directory
+# Path to logs directory inside outputs directory
 LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
 # Path to testing outputs directory inside outputs directory
 TEST_OUTPUTS_DIR = os.path.join(OUTPUT_DIR, "testing_outputs")
