@@ -1,6 +1,6 @@
 ## Introduction
 
-This repository demonstrates how to create generalized data preprocessing pipeline for your machine learning algorithm implementation. The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
+This repository demonstrates how to create a flexible data preprocessing pipeline for your machine learning algorithm implementation. The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
 
 ## Repository Contents
 
