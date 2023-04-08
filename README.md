@@ -27,11 +27,11 @@ The script will print top 10 rows of the transformed data and also save the prep
 The code requires Python 3 and the following libraries:
 
 ```makefile
-json==2.0.9
 pandas==1.5.2
 numpy==1.20.3
 scikit-learn==1.0
 feature-engine==1.2.0
+imbalanced-learn==0.8.1
 ```
 
 These packages can be installed by running the following command:
