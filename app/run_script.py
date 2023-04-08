@@ -1,3 +1,8 @@
+
+from imblearn.over_sampling import SMOTE
+import pandas as pd
+from collections import Counter
+
 from data_management.schema_provider import BinaryClassificationSchema
 from data_management.pipeline import get_preprocess_pipeline, save_preprocessor_and_lbl_encoder, get_label_encoder
 from data_management.data_utils import read_json_in_directory, read_csv_in_directory
@@ -21,13 +26,22 @@ def main():
     transformed_data = preprocess_pipeline.fit_transform(train_data.drop(data_schema.id_field, axis=1))
     transformed_labels = label_encoder.fit_transform(train_data[[data_schema.target_field]])
 
+    # handle class imbalance using RandomOverSampler
+    smote = SMOTE()
+    balanced_data, balanced_labels = smote.fit_resample(transformed_data, transformed_labels)
+
+
     print("*"*60)
-    print("Transformed features:")
-    print(transformed_data.head(10))
+    print("Balanced features:")
+    print(pd.DataFrame(balanced_data).head(5))
     print("*"*60)
-    print("Transformed labels:")
-    print(transformed_labels[:10])
+    print("Balanced labels:")
+    print(balanced_labels[:5])
     print("*"*60)
+
+    # Print original and balanced class counts
+    print("Original class counts:", Counter(transformed_labels.values.ravel()))
+    print("Balanced class counts:", Counter(balanced_labels.values.ravel()))
 
     # save preprocessing pipeline and label encoder
     save_preprocessor_and_lbl_encoder(preprocess_pipeline, label_encoder, paths.MODEL_ARTIFACTS_PATH)
