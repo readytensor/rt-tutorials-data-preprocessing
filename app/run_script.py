@@ -26,7 +26,7 @@ def main():
     transformed_data = preprocess_pipeline.fit_transform(train_data.drop(data_schema.id_field, axis=1))
     transformed_labels = label_encoder.fit_transform(train_data[[data_schema.target_field]])
 
-    # handle class imbalance using RandomOverSampler
+    # handle class imbalance using SMOTE
     smote = SMOTE()
     balanced_data, balanced_labels = smote.fit_resample(transformed_data, transformed_labels)
 
