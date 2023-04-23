@@ -1,11 +1,9 @@
-
-import sys
 from imblearn.over_sampling import SMOTE
 import pandas as pd
 from collections import Counter
 
 from data_management.schema_provider import BinaryClassificationSchema
-from data_management.pipeline import get_preprocess_pipeline, get_fitted_binary_target_encoder, \
+from data_management.pipeline import get_preprocess_pipeline, get_binary_target_encoder, \
     save_pipeline, save_label_encoder
 from data_management.data_utils import read_json_in_directory, read_csv_in_directory
 import paths
@@ -26,7 +24,7 @@ def main():
     save_pipeline(pipeline=preprocess_pipeline, file_path_and_name = paths.PREPROCESSOR_FILE_PATH)
     
     # create fitted label_encoder, transform labels, and save encoder
-    label_encoder = get_fitted_binary_target_encoder(
+    label_encoder = get_binary_target_encoder(
         target_field=data_schema.target_field,
         allowed_values=data_schema.allowed_target_values,
         positive_class=data_schema.positive_class)

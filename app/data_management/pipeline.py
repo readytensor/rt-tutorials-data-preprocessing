@@ -17,7 +17,7 @@ def get_preprocess_pipeline(data_schema):
     """
     Create a preprocessor pipeline to transform data as defined by data_schema.
     """
-    column_selector = preprocessors.ColumnSelector(columns=data_schema.all_fields)
+    column_selector = preprocessors.ColumnSelector(columns=data_schema.features)
     string_caster = preprocessors.TypeCaster(
         vars=data_schema.categorical_features + [data_schema.id_field, data_schema.target_field],
         cast_type=str
@@ -73,7 +73,7 @@ def get_preprocess_pipeline(data_schema):
     return pipeline
 
 
-def get_fitted_binary_target_encoder(target_field:str, allowed_values: List[str], positive_class: str) -> LabelEncoder:
+def get_binary_target_encoder(target_field:str, allowed_values: List[str], positive_class: str) -> LabelEncoder:
     """Create a LabelEncoder based on the data_schema.
 
     The positive class will be encoded as 1, and the negative class will be encoded as 0.
@@ -94,6 +94,19 @@ def get_fitted_binary_target_encoder(target_field:str, allowed_values: List[str]
         positive_class=positive_class
     )
     return encoder
+
+
+def get_class_names(label_encoder):
+    """Get the names of the classes for the target variable.
+
+    Args:
+        label_encoder: A CustomLabelBinarizer instance.
+
+    Returns:
+        A list of class names for the target variable.
+    """
+    class_names = label_encoder.given_classes
+    return class_names
 
 
 def save_pipeline(pipeline: Pipeline, file_path_and_name: str) -> None:
