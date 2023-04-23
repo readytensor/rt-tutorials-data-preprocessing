@@ -1,174 +1,140 @@
-import os
+from typing import List
 import joblib
 from sklearn.pipeline import Pipeline
 from feature_engine.wrappers import SklearnTransformerWrapper
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from feature_engine.encoding import RareLabelEncoder
 from feature_engine.imputation import (
     AddMissingIndicator,
     CategoricalImputer,
     MeanMedianImputer,
 )
-from sklearn.preprocessing import StandardScaler
 
-import data_management.preprocessors as preprocessors
+from data_management import preprocessors
 
-
-PREPROCESSOR_FNAME = "preprocessor.save"
-LABEL_ENCODER_FNAME = "label_encoder.save"
 
 def get_preprocess_pipeline(data_schema):
-    """Create a preprocessor pipeline to transform data as defined by data_schema.
-
-    Args:
-        data_schema: A Schema instance describing the data.
-
-    Returns:
-        A SciKit-Learn Pipeline to preprocess data.
     """
-    pipeline = Pipeline(
-        [
-            (
-                # keep only the columns that were defined in the schema
-                "column_selector",
-                preprocessors.ColumnSelector(columns=data_schema.features),
-            ),
-            (
-                # cast categorical features, id, and target (if present) to string
-                "string_caster",
-                preprocessors.TypeCaster(
-                    vars=data_schema.categorical_features + [data_schema.id_field , data_schema.target_field],
-                    cast_type=str,
-                ),
-            ),
-            (
-                # cast numerical features to float
-                "float_caster",
-                preprocessors.TypeCaster(
-                    vars=data_schema.numeric_features,
-                    cast_type=float,
-                ),
-            ),
-            (
-                # add missing indicator for nas in numerical features
-                "missing_indicator_numeric",
-                AddMissingIndicator(variables=data_schema.numeric_features),
-            ),
-            (
-                # impute numerical na with the mean
-                "mean_imputer_numeric",
-                MeanMedianImputer(imputation_method="mean",variables=data_schema.numeric_features),
-            ),
-            (
-                # standard scale the numerical features
-                "standard_scaler",
-                SklearnTransformerWrapper(
-                    StandardScaler(), variables=data_schema.numeric_features
-                ),
-            ),
-            (
-                # clip the standardized values to +/- 4.0, corresponding to +/- 4 std dev.
-                "outlier_value_clipper",
-                preprocessors.ValueClipper(
-                    fields_to_clip=data_schema.numeric_features,
-                    min_val=-4.0,  # - 4 std dev
-                    max_val=4.0,  # + 4 std dev
-                ),
-            ),
-            (
-                # impute categorical na with most frequent category, when missing values are rare (under a threshold)
-                "cat_most_frequent_imputer",
-                preprocessors.MostFrequentImputer(
-                    cat_vars=data_schema.categorical_features,
-                    threshold=0.1,
-                ),
-            ),
-            (
-                 # impute categorical na with string 'missing'
-                "cat_imputer_with_missing_tag",
-                preprocessors.FeatureEngineCategoricalTransformerWrapper(
-                    transformer=CategoricalImputer,
-                    cat_vars=data_schema.categorical_features,
-                    imputation_method="missing",
-                ),
-            ),
-            (
-                "rare_label_encoder",
-                preprocessors.FeatureEngineCategoricalTransformerWrapper(
-                    transformer=RareLabelEncoder,
-                    cat_vars=data_schema.categorical_features,
-                    tol=0.03,
-                    n_categories=1,
-                ),
-            ),
-            (
-                # one-hot encode cat vars
-                "one_hot_encoder",
-                preprocessors.OneHotEncoderMultipleCols(
-                    ohe_columns=data_schema.categorical_features,
-                ),
-            ),
-            (
-                # drop the original cat vars, we keep the ohe variables
-                "cat_var_dropper",
-                preprocessors.ColumnSelector(
-                    columns=data_schema.categorical_features,
-                    selector_type="drop"
-                ),
-            )
-        ]
+    Create a preprocessor pipeline to transform data as defined by data_schema.
+    """
+    column_selector = preprocessors.ColumnSelector(columns=data_schema.all_fields)
+    string_caster = preprocessors.TypeCaster(
+        vars=data_schema.categorical_features + [data_schema.id_field, data_schema.target_field],
+        cast_type=str
     )
+    float_caster = preprocessors.TypeCaster(
+        vars=data_schema.numeric_features,
+        cast_type=float
+    )
+    missing_indicator_numeric = AddMissingIndicator(variables=data_schema.numeric_features)
+    mean_imputer_numeric = MeanMedianImputer(imputation_method="mean", variables=data_schema.numeric_features)
+    standard_scaler = SklearnTransformerWrapper(StandardScaler(), variables=data_schema.numeric_features)
+    outlier_value_clipper = preprocessors.ValueClipper(
+        fields_to_clip=data_schema.numeric_features,
+        min_val=-4.0,
+        max_val=4.0
+    )
+    cat_most_frequent_imputer = preprocessors.MostFrequentImputer(
+        cat_vars=data_schema.categorical_features,
+        threshold=0.1
+    )
+    cat_imputer_with_missing_tag = preprocessors.FeatureEngineCategoricalTransformerWrapper(
+        transformer=CategoricalImputer,
+        cat_vars=data_schema.categorical_features,
+        imputation_method="missing"
+    )
+    rare_label_encoder = preprocessors.FeatureEngineCategoricalTransformerWrapper(
+        transformer=RareLabelEncoder,
+        cat_vars=data_schema.categorical_features,
+        tol=0.03,
+        n_categories=1
+    )
+    one_hot_encoder = preprocessors.OneHotEncoderMultipleCols(ohe_columns=data_schema.categorical_features)
+    cat_var_dropper = preprocessors.ColumnSelector(
+        columns=data_schema.categorical_features,
+        selector_type="drop"
+    )
+    
+    pipeline = Pipeline([
+        ("column_selector", column_selector),
+        ("string_caster", string_caster),
+        ("float_caster", float_caster),
+        ("missing_indicator_numeric", missing_indicator_numeric),
+        ("mean_imputer_numeric", mean_imputer_numeric),
+        ("standard_scaler", standard_scaler),
+        ("outlier_value_clipper", outlier_value_clipper),
+        ("cat_most_frequent_imputer", cat_most_frequent_imputer),
+        ("cat_imputer_with_missing_tag", cat_imputer_with_missing_tag),
+        ("rare_label_encoder", rare_label_encoder),
+        ("one_hot_encoder", one_hot_encoder),
+        ("cat_var_dropper", cat_var_dropper)
+    ])
+    
     return pipeline
 
-def get_label_encoder(data_schema):
-    """Create a custom label binarizer to encode the target variable.
+
+def get_fitted_binary_target_encoder(target_field:str, allowed_values: List[str], positive_class: str) -> LabelEncoder:
+    """Create a LabelEncoder based on the data_schema.
+
+    The positive class will be encoded as 1, and the negative class will be encoded as 0.
 
     Args:
-        data_schema: A Schema instance describing the data.
+        target_field: Name of the target field.
+        allowed_values: A list of allowed target variable values.
+        positive_class: The target value representing the positive class.
 
     Returns:
-        A CustomLabelBinarizer to encode the target variable.
+        A SciKit-Learn LabelEncoder instance.
     """
-    return preprocessors.CustomLabelBinarizer(
-        target_field=data_schema.target_field,
-        target_class=data_schema.target_class,
+
+    # Create a LabelEncoder instance and fit it with the desired class order
+    encoder = preprocessors.CustomLabelBinarizer(
+        target_field=target_field,
+        allowed_values=allowed_values,
+        positive_class=positive_class
     )
+    return encoder
 
-def get_class_names(label_encoder):
-    """Get the names of the classes for the target variable.
+
+def save_pipeline(pipeline: Pipeline, file_path_and_name: str) -> None:
+    """Save the fitted pipeline to a pickle file.
 
     Args:
-        label_encoder: A CustomLabelBinarizer instance.
+        pipeline (Pipeline): The fitted pipeline to be saved.
+        file_path_and_name (str): The path where the pipeline should be saved.
+    """
+    joblib.dump(pipeline, file_path_and_name)
+
+
+def save_label_encoder(label_encoder: LabelEncoder, file_path_and_name: str) -> None:
+    """Save a fitted label encoder to a file using joblib.
+
+    Args:
+        label_encoder: A fitted LabelEncoder instance.
+        file_path_and_name (str): The filepath to save the LabelEncoder to.
+    """
+    joblib.dump(label_encoder, file_path_and_name)
+
+
+def load_pipeline(path: str) -> Pipeline:
+    """Load the fitted pipeline from the given path.
+
+    Args:
+        path: Path to the saved pipeline.
 
     Returns:
-        A list of class names for the target variable.
+        Fitted pipeline.
     """
-    class_names = label_encoder.given_classes
-    return class_names
+    return joblib.load(path)
 
 
-def save_preprocessor_and_lbl_encoder(preprocess_pipe, label_encoder, file_path):
-    """Save the preprocessor pipeline and label encoder to disk.
+def load_label_encoder(path: str) -> LabelEncoder:
+    """Load the fitted label encoder from the given path.
 
     Args:
-        preprocess_pipe: A SciKit-Learn Pipeline instance.
-        label_encoder: A CustomLabelBinarizer instance.
-        file_path: A path to the directory to save the preprocessor and label encoder.
-    """
-    joblib.dump(preprocess_pipe, os.path.join(file_path, PREPROCESSOR_FNAME))
-    joblib.dump(label_encoder, os.path.join(file_path, LABEL_ENCODER_FNAME))
-    return
+        path: Path to the saved label encoder.
 
-
-def load_preprocessor_and_lbl_encoder(file_path):
+    Returns:
+        Fitted label encoder.
     """
-    Load the preprocessor and label encoder objects from disk.
-
-    Args:
-        file_path: The file path of the directory containing the saved preprocessor and label encoder objects.
-    
-    Returns: 
-        A tuple containing the loaded preprocessor and label encoder objects.
-    """
-    preprocess_pipe = joblib.load(os.path.join(file_path, PREPROCESSOR_FNAME))
-    label_encoder = joblib.load(os.path.join(file_path, LABEL_ENCODER_FNAME))
-    return preprocess_pipe, label_encoder
+    return joblib.load(path)

@@ -19,6 +19,10 @@ TEST_DIR = os.path.join(DATA_DIR, "testing")
 MODEL_PATH = os.path.join(CURRENT_DIR, "model")
 # Path to artifacts directory inside model directory
 MODEL_ARTIFACTS_PATH = os.path.join(MODEL_PATH, "artifacts")
+# Name of the preprocessing pipeline file
+PREPROCESSOR_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "preprocessor.joblib")
+# Name of the label encoder file
+LABEL_ENCODER_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "label_encoder.joblib")
 
 # Path to outputs 
 OUTPUT_DIR = os.path.join(CURRENT_DIR, "outputs")

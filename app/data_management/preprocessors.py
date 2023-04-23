@@ -1,7 +1,8 @@
+from typing import List
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import label_binarize
+import sys
 
 
 class ColumnSelector(BaseEstimator, TransformerMixin):
@@ -22,11 +23,8 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """
-        Fits the transformer.
+        No-op
 
-        Args:
-            X: pandas DataFrame - the input data
-            y: unused
         Returns:
             self
         """
@@ -73,14 +71,8 @@ class TypeCaster(BaseEstimator, TransformerMixin):
         """
         No-op.
 
-        Args:
-            X : pandas DataFrame
-                Input data to be transformed.
-            y : None
-                Not used in this transformer.
-        Returns
-            self : object
-                Returns self.
+        Returns:
+            self
         """
         return self
 
@@ -128,13 +120,10 @@ class ValueClipper(BaseEstimator, TransformerMixin):
 
     def fit(self, data):
         """
-        Fit function that does nothing.
+        No-op.
 
-        Args:
-            data : pandas.DataFrame
-                The input data. 
         Returns:
-            ValueClipper - This instance of the ValueClipper class.
+            self
         """
         return self
 
@@ -259,16 +248,15 @@ class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin
 
 
 class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
-    """ Encodes categorical features using one-hot encoding. """
+    """Encodes categorical features using one-hot encoding."""
+
     def __init__(self, ohe_columns, max_num_categories=10):
         """
-        Initializes a new instance of the `OneHotEncoderMultipleCols` class.
+        Initialize a new instance of the `OneHotEncoderMultipleCols` class.
 
         Args:
-            ohe_columns : list of str
-                List of the categorical features to one-hot encode.
-            max_num_categories : int, optional (default=10)
-                Maximum number of categories to include for each feature.
+            ohe_columns (list[str]): List of the categorical features to one-hot encode.
+            max_num_categories (int, optional): Maximum number of categories to include for each feature.
         """
         super().__init__()
         self.ohe_columns = ohe_columns
@@ -277,63 +265,62 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """
-        Learns the values to be used for one-hot encoding from the input data X.
+        Learn the values to be used for one-hot encoding from the input data X.
 
         Args:
-            X : pandas DataFrame
-                Data to learn one-hot encoding from.
+            X (pandas.DataFrame): Data to learn one-hot encoding from.
             y : unused
 
         Returns:
-            self : OneHotEncoderMultipleCols
+            OneHotEncoderMultipleCols: self
         """
         for col in self.ohe_columns:
             if col in X.columns:
-                self.top_cat_by_ohe_col[col] = [
-                    cat for cat in X[col].value_counts()\
-                        .sort_values(ascending = False).head(self.max_num_categories).index
-                    ]
+                top_categories = X[col].value_counts().sort_values(ascending=False).head(self.max_num_categories).index
+                self.top_cat_by_ohe_col[col] = list(top_categories)
         return self
 
     def transform(self, data):
         """
-        Encodes the input data using the learned values.
+        Encode the input data using the learned values.
 
         Args:
-            data : pandas DataFrame - Data to one-hot encode.
-        Returns:
-            transformed_data : pandas DataFrame - One-hot encoded data.
-        """
-        if self.ohe_columns and len(self.ohe_columns) > 0:
-            data.reset_index(inplace=True, drop=True)
-            df_list = [data]
-            cols_list = list(data.columns)
-            for col in self.ohe_columns:
-                if len(self.top_cat_by_ohe_col[col]) > 0:
-                    if col in data.columns:
-                        for cat in self.top_cat_by_ohe_col[col]:
-                            col_name = col + '_' + cat
-                            vals = np.where(data[col] == cat, 1, 0)
-                            df = pd.DataFrame(vals, columns=[col_name])
-                            df_list.append(df)
+            data (pandas.DataFrame): Data to one-hot encode.
 
-                            cols_list.append(col_name)
-                    else:
-                        raise Exception(f'''
-                            Error: Fitted one-hot-encoded column {col}
-                            does not exist in dataframe given for transformation.
-                            This will result in a shape mismatch for train/prediction job.
-                            ''')
-            transformed_data = pd.concat(df_list, axis=1, ignore_index=True)
-            transformed_data.columns =  cols_list
-            return transformed_data
-        else: 
+        Returns:
+            transformed_data (pandas.DataFrame): One-hot encoded data.
+        """
+        if not self.ohe_columns:
             return data
+
+        data.reset_index(inplace=True, drop=True)
+        df_list = [data]
+        cols_list = list(data.columns)
+
+        for col in self.ohe_columns:
+            if not self.top_cat_by_ohe_col[col]:
+                continue
+
+            if col not in data.columns:
+                raise ValueError(f"Fitted one-hot-encoded column {col} does not exist in dataframe given for transformation. "
+                                 "This will result in a shape mismatch for train/prediction job.")
+
+            for cat in self.top_cat_by_ohe_col[col]:
+                col_name = f"{col}_{cat}"
+                vals = np.where(data[col] == cat, 1, 0)
+                df = pd.DataFrame(vals, columns=[col_name])
+                df_list.append(df)
+                cols_list.append(col_name)
+
+        transformed_data = pd.concat(df_list, axis=1, ignore_index=True)
+        transformed_data.columns = cols_list
+        return transformed_data
+
 
 
 class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
     """ Binarizes the target variable to 0/1 values. """
-    def __init__(self, target_field, target_class) -> None:
+    def __init__(self, target_field:str, allowed_values: List[str], positive_class: str) -> None:
         """
         Initializes a new instance of the `CustomLabelBinarizer` class.
 
@@ -346,24 +333,18 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         super().__init__()
         self.target_field = target_field
-        self.target_class = target_class
-        self.given_classes = None
+        self.positive_class = str(positive_class)
+        self.negative_class = str([value for value in allowed_values if value != positive_class][0])
+        self.given_classes = [self.negative_class, self.positive_class]
+        self.class_encoding = {self.negative_class:0, self.positive_class:1}
 
     def fit(self, data):
         """
-        Fit the transformer.
+        No-op.
 
-        Args:
-            data: pandas DataFrame - input data
         Returns:
             self
-        """
-        # grab the two classes
-        given_classes = data[self.target_field].drop_duplicates().tolist()
-        # sort so that the target class is last
-        given_classes.sort(key = lambda k: k == self.target_class)
-        # save for transformation
-        self.given_classes = given_classes
+        """   
         return self
 
     def transform(self, data):
@@ -377,8 +358,5 @@ class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         data = data.copy()
         if self.target_field in data.columns:
-            data[self.target_field] = label_binarize(
-                data[self.target_field],
-                classes = self.given_classes
-            ).flatten()
+            data[self.target_field] = data[self.target_field].apply(str).map(self.class_encoding)
         return data
