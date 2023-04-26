@@ -1,8 +1,7 @@
-from typing import List
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-import sys
+from feature_engine.imputation import CategoricalImputer
 
 
 class ColumnSelector(BaseEstimator, TransformerMixin):
@@ -140,6 +139,7 @@ class ValueClipper(BaseEstimator, TransformerMixin):
 
         """
         for field in self.fields_to_clip:
+            if field not in data.columns: continue
             if self.min_val is not None:
                 data[field] = data[field].clip(lower=self.min_val)
             if self.max_val is not None:
@@ -216,7 +216,8 @@ class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin
 
         """
         self.cat_vars = cat_vars
-        self.transformer = transformer(variables = cat_vars, **kwargs)
+        self.kwargs = kwargs
+        self.transformer = transformer
 
     def fit(self, X, y=None): 
         """
@@ -228,8 +229,10 @@ class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin
         Returns:
             self
         """
-        if len(self.cat_vars) > 0:            
-            self.transformer.fit(X[self.cat_vars], y)
+        self.fitted_vars = list(set(self.cat_vars).intersection(X.columns))
+        if len(self.fitted_vars) > 0:
+            self.transformer = self.transformer(variables = self.fitted_vars, **self.kwargs)
+            self.transformer.fit(X[self.fitted_vars], y)
         return self
     
     def transform(self, X, y=None):
@@ -242,25 +245,28 @@ class FeatureEngineCategoricalTransformerWrapper(BaseEstimator, TransformerMixin
         Returns:
             pandas DataFrame - The transformed data with the fitted categorical features.
         """
-        if len(self.cat_vars) > 0:
-            X[self.cat_vars] = self.transformer.transform(X[self.cat_vars])
+        if len(self.fitted_vars) > 0:
+            X[self.fitted_vars] = self.transformer.transform(X[self.fitted_vars])
         return X
 
 
 class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
     """Encodes categorical features using one-hot encoding."""
 
-    def __init__(self, ohe_columns, max_num_categories=10):
+    def __init__(self, ohe_columns, max_num_categories=10, drop_original=True):
         """
         Initialize a new instance of the `OneHotEncoderMultipleCols` class.
 
         Args:
             ohe_columns (list[str]): List of the categorical features to one-hot encode.
             max_num_categories (int, optional): Maximum number of categories to include for each feature.
+            drop_original(bool, optional): Flag to drop or keep the original OHE columns
         """
         super().__init__()
         self.ohe_columns = ohe_columns
         self.max_num_categories = max_num_categories
+        self.drop_original = drop_original
+        self.is_fitted = False
         self.top_cat_by_ohe_col = {}
 
     def fit(self, X, y=None):
@@ -274,10 +280,10 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         Returns:
             OneHotEncoderMultipleCols: self
         """
-        for col in self.ohe_columns:
-            if col in X.columns:
-                top_categories = X[col].value_counts().sort_values(ascending=False).head(self.max_num_categories).index
-                self.top_cat_by_ohe_col[col] = list(top_categories)
+        self.fitted_vars = list(set(self.ohe_columns).intersection(X.columns))
+        for col in self.fitted_vars:
+            top_categories = X[col].value_counts().sort_values(ascending=False).head(self.max_num_categories).index
+            self.top_cat_by_ohe_col[col] = list(top_categories)
         return self
 
     def transform(self, data):
@@ -289,18 +295,15 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
 
         Returns:
             transformed_data (pandas.DataFrame): One-hot encoded data.
-        """
-        if not self.ohe_columns:
+        """   
+        if len(self.fitted_vars) == 0:
             return data
 
         data.reset_index(inplace=True, drop=True)
         df_list = [data]
         cols_list = list(data.columns)
 
-        for col in self.ohe_columns:
-            if not self.top_cat_by_ohe_col[col]:
-                continue
-
+        for col in self.fitted_vars:
             if col not in data.columns:
                 raise ValueError(f"Fitted one-hot-encoded column {col} does not exist in dataframe given for transformation. "
                                  "This will result in a shape mismatch for train/prediction job.")
@@ -314,49 +317,23 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
 
         transformed_data = pd.concat(df_list, axis=1, ignore_index=True)
         transformed_data.columns = cols_list
+
+        if self.drop_original: 
+            transformed_data.drop(self.fitted_vars, axis=1, inplace=True)
         return transformed_data
 
 
+    if __name__ == "__main__":
 
-class CustomLabelBinarizer(BaseEstimator, TransformerMixin):
-    """ Binarizes the target variable to 0/1 values. """
-    def __init__(self, target_field:str, allowed_values: List[str], positive_class: str) -> None:
-        """
-        Initializes a new instance of the `CustomLabelBinarizer` class.
+        df = pd.DataFrame({"col1": [np.nan, "A", "B", np.nan], "col2": [1, 2, 3, 4], 
+            "col3": ["X", np.nan, "Y", np.nan]})
+        wrapper = FeatureEngineCategoricalTransformerWrapper(
+            transformer=CategoricalImputer,
+            cat_vars=["col1", "invalid_col"],
+            imputation_method="missing",
+            fill_value="Unknown"
+        )
+        result = wrapper.fit_transform(df)
+        expected = pd.DataFrame({"col1": ["Unknown", "A", "B", "Unknown"], "col2": [1, 2, 3, 4], "col3": ["X", np.nan, "Y", np.nan]})
+        pd.testing.assert_frame_equal(result, expected)
 
-        Parameters:
-        -----------
-        :target_field: str
-            Name of the target field.
-        :target_class: str
-            Name of the target class.
-        """
-        super().__init__()
-        self.target_field = target_field
-        self.positive_class = str(positive_class)
-        self.negative_class = str([value for value in allowed_values if value != positive_class][0])
-        self.given_classes = [self.negative_class, self.positive_class]
-        self.class_encoding = {self.negative_class:0, self.positive_class:1}
-
-    def fit(self, data):
-        """
-        No-op.
-
-        Returns:
-            self
-        """   
-        return self
-
-    def transform(self, data):
-        """
-        Transform the data.
-
-        Args:
-            data: pandas DataFrame - data to transform
-        Returns:
-            pandas DataFrame - transformed data
-        """
-        data = data.copy()
-        if self.target_field in data.columns:
-            data[self.target_field] = data[self.target_field].apply(str).map(self.class_encoding)
-        return data

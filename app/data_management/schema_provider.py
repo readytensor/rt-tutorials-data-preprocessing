@@ -76,6 +76,16 @@ class BinaryClassificationSchema:
         return self.schema["targetField"]["positiveClass"]
 
     @property
+    def target_description(self) -> str:
+        """
+        Gets the description for the target field.
+
+        Returns:
+            str: The description for the target field.
+        """
+        return self.schema["targetField"].get("description", "No description for target available.")
+
+    @property
     def numeric_features(self) -> List[str]:
         """
         Gets the names of the numeric features.
@@ -110,7 +120,7 @@ class BinaryClassificationSchema:
                 allowed_values[field["name"]] = field["allowedValues"]
         return allowed_values
 
-    def allowed_values_for_categorical_feature(self, feature_name: str) -> List[str]:
+    def get_allowed_values_for_categorical_feature(self, feature_name: str) -> List[str]:
         """
         Gets the allowed values for a single categorical feature.
 
@@ -125,6 +135,43 @@ class BinaryClassificationSchema:
             if field["dataType"] == "CATEGORICAL" and field["name"] == feature_name:
                 return field["allowedValues"]
         raise ValueError(f"Categorical feature '{feature_name}' not found in the schema.")
+    
+    def get_description_for_feature(self, feature_name: str) -> str:
+        """
+        Gets the description for a single feature.
+
+        Args:
+            feature_name (str): The name of the feature.
+
+        Returns:
+            str: The description for the specified feature.
+        """
+        fields = self.schema["predictorFields"]
+        for field in fields:
+            if field["name"] == feature_name:
+                return field.get("description", "No description for feature available.")
+        raise ValueError(f"Feature '{feature_name}' not found in the schema.")
+    
+    def get_example_value_for_feature(self, feature_name: str) -> List[str]:
+        """
+        Gets the example value for a single feature.
+
+        Args:
+            feature_name (str): The name of the feature.
+
+        Returns:
+            List[str]: The example values for the specified feature.
+        """       
+
+        fields = self.schema["predictorFields"]
+        for field in fields:
+            if field["name"] == feature_name:
+                if field["dataType"] == "NUMERIC":
+                    return field.get("example", 0.0)
+                elif field["dataType"] == "CATEGORICAL":
+                    return field["allowedValues"][0]
+                else: raise ValueError(f"Invalid data type for Feature '{feature_name}' found in the schema.")
+        raise ValueError(f"Feature '{feature_name}' not found in the schema.")
 
     @property
     def features(self) -> List[str]:
@@ -145,3 +192,5 @@ class BinaryClassificationSchema:
             List[str]: The list of all field names (ID field, target field, and all features).
         """
         return [self.id_field, self.target_field] + self.features
+
+

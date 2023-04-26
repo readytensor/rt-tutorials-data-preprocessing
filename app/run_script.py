@@ -1,49 +1,83 @@
-from imblearn.over_sampling import SMOTE
-import pandas as pd
 from collections import Counter
+from utils import (
+    load_data_schema, 
+    read_csv_in_directory, 
+    read_json_as_dict, 
+    split_train_val, 
+    get_validation_percentage
+)
+from data_management.preprocess import (
+    create_pipeline_and_label_encoder,
+    train_pipeline_and_label_encoder,
+    save_pipeline_and_label_encoder,
+    transform_data,
+    handle_class_imbalance
+)
+from config import paths
+from utils import set_seeds
 
-from data_management.schema_provider import BinaryClassificationSchema
-from data_management.pipeline import get_preprocess_pipeline, get_binary_target_encoder, \
-    save_pipeline, save_label_encoder
-from data_management.data_utils import read_json_in_directory, read_csv_in_directory
-import paths
 
 
-def main():
+def run_training():
+    """
+    Run the training process for the binary classification model.
+    """
+    # set seeds
+    set_seeds(seed_value=0)
 
     # load the json file schema into a dictionary and use it to instantiate the schema provider
-    schema_dict = read_json_in_directory(file_dir_path=paths.SCHEMA_DIR)
-    data_schema = BinaryClassificationSchema(schema_dict)
+    data_schema = load_data_schema(paths.SCHEMA_DIR)
 
     # load train data
     train_data = read_csv_in_directory(file_dir_path=paths.TRAIN_DIR)
 
-    # create preprocessing pipeline, transform data, and save pipeline
-    preprocess_pipeline = get_preprocess_pipeline(data_schema = data_schema)
-    transformed_data = preprocess_pipeline.fit_transform(train_data)
-    save_pipeline(pipeline=preprocess_pipeline, file_path_and_name = paths.PREPROCESSOR_FILE_PATH)
-    
-    # create fitted label_encoder, transform labels, and save encoder
-    label_encoder = get_binary_target_encoder(
-        target_field=data_schema.target_field,
-        allowed_values=data_schema.allowed_target_values,
-        positive_class=data_schema.positive_class)
-    transformed_labels = label_encoder.transform(train_data[[data_schema.target_field]])
-    save_label_encoder(label_encoder=label_encoder, file_path_and_name = paths.LABEL_ENCODER_FILE_PATH)
+    # load the model configuration
+    model_config = read_json_as_dict(paths.MODEL_CONFIG_FILE_PATH)
+
+    # get the validation percentage from the configuration
+    val_pct = get_validation_percentage(model_config)
+
+    # split train data into training and validation sets
+    train_split, val_split = split_train_val(train_data, val_pct=val_pct)
+
+    # create preprocessing pipeline and target encoder
+    preprocess_pipeline, label_encoder = create_pipeline_and_label_encoder(model_config, data_schema)
+
+    # train pipeline and label encoder
+    transformed_data, transformed_labels = train_pipeline_and_label_encoder( \
+        preprocess_pipeline, label_encoder, train_split, data_schema)
 
     # handle class imbalance using SMOTE
-    smote = SMOTE()
-    balanced_data, balanced_labels = smote.fit_resample(transformed_data, transformed_labels)
+    balanced_data, balanced_labels = handle_class_imbalance(transformed_data, transformed_labels, random_state=0)
 
-    print("*"*60)
-    print("Balanced features:")
-    print(pd.DataFrame(balanced_data).head(5))
-    print("*"*60)
+    # save pipeline and label encoder
+    save_pipeline_and_label_encoder(preprocess_pipeline, label_encoder,
+           paths.PIPELINE_FILE_PATH, paths.LABEL_ENCODER_FILE_PATH)
+    
+    print("*" * 60)
+    print("Original data shape:", train_data.shape)
+    print("Original train and valid split shapes:", train_split.shape, val_split.shape)
+    print("Processed train X/y shapes:", transformed_data.shape, transformed_labels.shape)
+    print("Balanced train X/y shapes:", balanced_data.shape, balanced_labels.shape)
+    print("*" * 60)
+    print("Balanced train data:")
+    print(balanced_data.head(5))
+    print("*" * 60)
 
     # Print original and balanced class counts
-    print("Original class counts:", Counter(transformed_labels.values.ravel()))
-    print("Balanced class counts:", Counter(balanced_labels.values.ravel()))
+    print("Original train data class counts:", Counter(transformed_labels.values.ravel()))
+    print("Balanced train data class counts:", Counter(balanced_labels.values.ravel()))
+
+    # transform validation data
+    transformed_val_data, transformed_val_labels, _ = transform_data(preprocess_pipeline, label_encoder, val_split, data_schema)
+    
+    print("*" * 60)
+    print("Processed validation data:")
+    print(transformed_val_data.head())
+    print("Processed validation X/y shapes:", transformed_val_data.shape, transformed_val_labels.shape)
+    print("Processed validation data class counts:", Counter(transformed_val_labels.values.ravel()))
 
 
-if __name__ == "__main__":
-    main()
+
+if __name__ == "__main__": 
+    run_training()
