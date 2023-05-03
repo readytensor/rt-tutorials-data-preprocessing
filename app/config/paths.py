@@ -48,11 +48,11 @@ PREDICTIONS_FILE_PATH = os.path.join(PREDICTIONS_DIR, "predictions.csv")
 HPT_OUTPUTS_DIR = os.path.join(OUTPUT_DIR, "hpt_outputs")
 
 # Log file paths
-TRAIN_LOG_FILE_PATH = os.path.join(LOGS_DIR, "train.log")
-PREDICT_LOG_FILE_PATH = os.path.join(LOGS_DIR, "predict.log")
-SERVE_LOG_FILE_PATH = os.path.join(LOGS_DIR, "serve.log")
+TRAIN_LOG_FILE_PATH = os.path.join(LOGS_DIR, "train_log.txt")
+PREDICT_LOG_FILE_PATH = os.path.join(LOGS_DIR, "predict_log.txt")
+SERVE_LOG_FILE_PATH = os.path.join(LOGS_DIR, "serve_log.txt")
 
 # Error file paths
-TRAIN_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "train-error.log")
-PREDICT_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "predict-error.log")
-SERVE_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "serve-error.log")
+TRAIN_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "train_error.txt")
+PREDICT_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "predict_error.txt")
+SERVE_ERROR_FILE_PATH = os.path.join(LOGS_DIR, "serve_error.txt")
