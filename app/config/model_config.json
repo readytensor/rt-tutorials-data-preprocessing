@@ -18,8 +18,11 @@
         "replace_with": "__rare__"
       },
       "one_hot_encoder": { "handle_unknown": "ignore" }
+    },
+    "feature_selection_preprocessing": {
+      "constant_feature_dropper": { "tol": 1 },
+      "correlated_feature_dropper": { "threshold": 0.95 }
     }
   },
-  "feature_selection": { "select_k_best": { "score_func": "chi2", "k": 10 } },
   "validation_split": 0.1
 }

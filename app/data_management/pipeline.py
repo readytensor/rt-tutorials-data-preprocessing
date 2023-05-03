@@ -7,7 +7,12 @@ from feature_engine.encoding import RareLabelEncoder
 from feature_engine.imputation import (
     AddMissingIndicator,
     CategoricalImputer,
-    MeanMedianImputer,
+    MeanMedianImputer    
+)
+from feature_engine.selection import (
+    DropConstantFeatures,
+    DropDuplicateFeatures,
+    SmartCorrelatedSelection
 )
 from data_management import custom_transformers as transformers
 
@@ -17,14 +22,21 @@ def get_preprocess_pipeline(config: Dict, data_schema) -> Pipeline:
     Create a preprocessor pipeline to transform data as defined by data_schema.
     """ 
     # Extract configuration values from the config dictionary
-    num_config = config["preprocessing"]["numeric_transformers"]
+    preprocessing_config = config["preprocessing"]
+
+    num_config = preprocessing_config["numeric_transformers"]
     clip_min_val = num_config["outlier_clipper"]["min_val"]
     clip_max_val = num_config["outlier_clipper"]["max_val"]
     imputation_method = num_config["mean_median_imputer"]["imputation_method"]
-    cat_config = config["preprocessing"]["categorical_transformers"]
+    
+    cat_config = preprocessing_config["categorical_transformers"]
     cat_imputer_threshold = cat_config["cat_most_frequent_imputer"]["threshold"]
     rare_label_tol = cat_config["rare_label_encoder"]["tol"]
     rare_label_n_categories = cat_config["rare_label_encoder"]["n_categories"]
+    
+    feat_sel_pp_config = preprocessing_config["feature_selection_preprocessing"]
+    constant_feature_tol = feat_sel_pp_config["constant_feature_dropper"]["tol"]
+    correl_feature_threshold = feat_sel_pp_config["correlated_feature_dropper"]["threshold"]
 
 
     column_selector = transformers.ColumnSelector(columns=data_schema.features)
@@ -59,6 +71,17 @@ def get_preprocess_pipeline(config: Dict, data_schema) -> Pipeline:
         tol=rare_label_tol,
         n_categories=rare_label_n_categories
     )
+    constant_feature_dropper = DropConstantFeatures(
+        variables=None,
+        tol=constant_feature_tol,
+        missing_values="raise")
+    duplicated_feature_dropper = DropDuplicateFeatures(
+        variables=None,
+        missing_values="raise")
+    correlated_feature_dropper = SmartCorrelatedSelection(
+        variables=None,
+        selection_method="variance",
+        threshold=correl_feature_threshold, missing_values="raise")
     one_hot_encoder = transformers.OneHotEncoderMultipleCols(ohe_columns=data_schema.categorical_features)
     
     
@@ -73,6 +96,9 @@ def get_preprocess_pipeline(config: Dict, data_schema) -> Pipeline:
         ("cat_most_frequent_imputer", cat_most_frequent_imputer),
         ("cat_imputer_with_missing_tag", cat_imputer_with_missing_tag),
         ("rare_label_encoder", rare_label_encoder),
+        ("constant_feature_dropper", constant_feature_dropper),
+        ("duplicated_feature_dropper", duplicated_feature_dropper),
+        ("correlated_feature_dropper", correlated_feature_dropper),
         ("one_hot_encoder", one_hot_encoder)
     ])
     
