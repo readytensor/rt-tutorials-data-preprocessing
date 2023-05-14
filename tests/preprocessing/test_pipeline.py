@@ -362,7 +362,6 @@ def test_pipeline_drops_all_nan_categorical_columns(schema_provider, preprocessi
     pipeline = get_preprocess_pipeline(schema_provider, preprocessing_config)
     df = pd.DataFrame({
         'numeric_feature_1': [1, 2, 3, 4],
-        'numeric_feature_2': [1, 2, 3, 4],
         'categorical_feature_1': [None, None, None, None],
         'target_field': ['A', 'B', 'A', 'B']
     })

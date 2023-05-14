@@ -49,7 +49,7 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
 
 class DropAllNaNFeatures(BaseEstimator, TransformerMixin):
     """Drops features that contain all NaN values."""
-    def __init__(self, columns: List(str)):
+    def __init__(self, columns: List[str]):
         """
         Initializes a new instance of the `ColumnSelector` class.
 
@@ -90,7 +90,7 @@ class TypeCaster(BaseEstimator, TransformerMixin):
     A custom transformer that casts the specified variables in the input data to a specified data type.
     """
 
-    def __init__(self, vars: List[str], cast_type:str):
+    def __init__(self, vars:List[str], cast_type:str):
         """
         Initializes a new instance of the `TypeCaster` class.
 
@@ -201,7 +201,7 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
 class ValueClipper(BaseEstimator, TransformerMixin):
     """Clips the values of the specified fields to a specified range."""
     def __init__(self, 
-                 fields_to_clip: List(str), 
+                 fields_to_clip: List[str], 
                  min_val:Union[float,None], 
                  max_val:Union[float,None]) -> None:
         """
@@ -309,7 +309,7 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
     """Encodes categorical features using one-hot encoding."""
 
     def __init__(self, 
-                 ohe_columns:List[str], 
+                 ohe_columns:List[str],
                  max_num_categories:int=10, drop_original:bool=True):
         """
         Initialize a new instance of the `OneHotEncoderMultipleCols` class.
