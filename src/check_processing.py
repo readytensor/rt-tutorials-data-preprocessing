@@ -19,7 +19,7 @@ from preprocessing.preprocess import (
 
 
 def check_preprocessing():
-    """Reads the binary classification schema."""
+    """Applies data transformations to input features and targets."""
     set_seeds(seed_value=0)
 
     # load and save schema
