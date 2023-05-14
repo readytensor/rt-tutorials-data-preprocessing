@@ -1,15 +1,12 @@
 import numpy as np
 import pandas as pd
-import sys 
-
 from sklearn.base import BaseEstimator, TransformerMixin
-from feature_engine.imputation import CategoricalImputer
-from feature_engine.imputation import  AddMissingIndicator
+from typing import List, Any, Union
 
 
 class ColumnSelector(BaseEstimator, TransformerMixin):
     """Selects or drops specified columns."""
-    def __init__(self, columns, selector_type='keep'):
+    def __init__(self, columns:List[str], selector_type:str='keep'):
         """
         Initializes a new instance of the `ColumnSelector` class.
 
@@ -23,7 +20,7 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         assert selector_type in ["keep", "drop"]
         self.selector_type = selector_type
 
-    def fit(self, X, y=None):
+    def fit(self, X:pd.DataFrame, y=None):
         """
         No-op
 
@@ -32,7 +29,7 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, X):
+    def transform(self, X:pd.DataFrame):
         """
         Applies the column selection.
 
@@ -50,17 +47,55 @@ class ColumnSelector(BaseEstimator, TransformerMixin):
         return X
 
 
+class DropAllNaNFeatures(BaseEstimator, TransformerMixin):
+    """Drops features that contain all NaN values."""
+    def __init__(self, columns: List(str)):
+        """
+        Initializes a new instance of the `ColumnSelector` class.
+
+        Args:
+            columns : list of str
+                List of column names to select or drop.
+            selector_type : str, optional (default='keep')
+                Type of selection. Must be either 'keep' or 'drop'.
+        """
+        self.columns = columns
+
+    def fit(self, *args, **kwargs):
+        return self
+
+    def transform(self, X: pd.DataFrame):
+        """
+        Drops the features that contain all NaN values from the input data.
+
+        Args:
+            X : pandas.DataFrame - The input data.
+
+        Returns:
+            pandas.DataFrame: The transformed data.
+        """
+        cols_to_check = [c for c in X.columns if c in self.columns]
+        if len(cols_to_check) ==0:
+            return X
+        X = X.copy()
+        columns_with_all_nan_ = X[cols_to_check].columns[X[cols_to_check].isna().all()].tolist()
+        X = X.drop(columns=columns_with_all_nan_, errors='ignore')
+        if X.empty:
+            raise ValueError("All features in the input dataframe are NaN. Dropping all yields empty dataframe")
+        return X
+
+
 class TypeCaster(BaseEstimator, TransformerMixin):
     """
     A custom transformer that casts the specified variables in the input data to a specified data type.
     """
 
-    def __init__(self, vars, cast_type):
+    def __init__(self, vars: List[str], cast_type:str):
         """
         Initializes a new instance of the `TypeCaster` class.
 
         Args:
-            vars : list
+            vars : list of str
                 List of variable names to be transformed.
             cast_type : data type
                 Data type to which the specified variables will be cast.
@@ -69,7 +104,7 @@ class TypeCaster(BaseEstimator, TransformerMixin):
         self.vars = vars
         self.cast_type = cast_type
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         """
         No-op.
 
@@ -78,7 +113,7 @@ class TypeCaster(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, data):
+    def transform(self, data: pd.DataFrame):
         """
         Applies the casting to given features in input dataframe.
 
@@ -94,14 +129,15 @@ class TypeCaster(BaseEstimator, TransformerMixin):
         for var in applied_cols:
             if data[var].notnull().any():  # check if the column has any non-null values
                 data[var] = data[var].apply(self.cast_type)
-            else: 
+            else:
                 # all values are null. so no-op
                 pass
         return data
 
 
 class TransformerWrapper(BaseEstimator, TransformerMixin):
-    def __init__(self, transformer, variables, **kwargs):
+    def __init__(self, 
+    transformer:Union[BaseEstimator, TransformerMixin], variables: List[str], **kwargs):
         """
         Wrapper class that fits/transforms using given transformer if given variables are
         present in data, else returns the data as-is.
@@ -115,11 +151,11 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
                 Additional key-value pairs for arguments accepted by the given transformer
 
         """
+        self.transformer = transformer
         self.variables = variables
         self.kwargs = kwargs
-        self.transformer = transformer
 
-    def fit(self, X, y=None):
+    def fit(self, X:pd.DataFrame, y=None):
         """
         Fits the transformer if categorical variables are present.
 
@@ -135,7 +171,7 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
             self.transformer.fit(X[self.fitted_vars], y)
         return self
     
-    def transform(self, X, y=None):
+    def transform(self, X:pd.DataFrame, y=None):
         """
         Transform the data if categorical variables are present..
 
@@ -164,7 +200,10 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
 
 class ValueClipper(BaseEstimator, TransformerMixin):
     """Clips the values of the specified fields to a specified range."""
-    def __init__(self, fields_to_clip, min_val, max_val) -> None:
+    def __init__(self, 
+                 fields_to_clip: List(str), 
+                 min_val:Union[float,None], 
+                 max_val:Union[float,None]) -> None:
         """
         Initializes a new instance of the `ValueClipper` class.
 
@@ -182,7 +221,7 @@ class ValueClipper(BaseEstimator, TransformerMixin):
         self.min_val = min_val
         self.max_val = max_val
 
-    def fit(self, data):
+    def fit(self, data:pd.DataFrame):
         """
         No-op.
 
@@ -191,7 +230,7 @@ class ValueClipper(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, data):
+    def transform(self, data:pd.DataFrame):
         """
         Clips the values of the specified fields to the specified range.
         
@@ -214,7 +253,7 @@ class ValueClipper(BaseEstimator, TransformerMixin):
 
 class MostFrequentImputer(BaseEstimator, TransformerMixin):
     """Imputes missing values using the most frequently observed class for categorical features when missing values are rare (under 10% of samples). """
-    def __init__(self, cat_vars, threshold):
+    def __init__(self, cat_vars:List[str], threshold:float):
         """
         Initializes a new instance of the `MostFrequentImputer` class.
         
@@ -229,7 +268,7 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
         self.threshold = threshold
         self.fill_vals = {}
 
-    def fit(self, X, y=None):
+    def fit(self, X:pd.DataFrame, y=None):
         """
         Fits the transformer.
 
@@ -249,7 +288,7 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
                 self.fill_vals[col] = X[col].value_counts().index[0]
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X:pd.DataFrame, y=None):
         """
         Transform the data by imputing the most frequent class for the fitted categorical features.
 
@@ -269,7 +308,9 @@ class MostFrequentImputer(BaseEstimator, TransformerMixin):
 class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
     """Encodes categorical features using one-hot encoding."""
 
-    def __init__(self, ohe_columns, max_num_categories=10, drop_original=True):
+    def __init__(self, 
+                 ohe_columns:List[str], 
+                 max_num_categories:int=10, drop_original:bool=True):
         """
         Initialize a new instance of the `OneHotEncoderMultipleCols` class.
 
@@ -286,7 +327,7 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         self.top_cat_by_ohe_col = {}
         self.fitted_vars = []
 
-    def fit(self, X, y=None):
+    def fit(self, X:pd.DataFrame, y=None):
         """
         Learn the values to be used for one-hot encoding from the input data X.
 
@@ -305,7 +346,7 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
             self.top_cat_by_ohe_col[col] = list(top_categories)[:num_categories_to_use]
         return self
 
-    def transform(self, data):
+    def transform(self, data:pd.DataFrame):
         """
         Encode the input data using the learned values.
 
