@@ -7,8 +7,7 @@ from schema.data_schema import load_json_data_schema, save_schema
 from config import paths
 from utils import (
     set_seeds,
-    read_csv_in_directory,
-    split_train_val,
+    load_and_split_data,
     read_json_as_dict
 )
 from preprocessing.preprocess import (
@@ -17,22 +16,6 @@ from preprocessing.preprocess import (
     save_pipeline_and_target_encoder,
     handle_class_imbalance
 )
-
-def load_and_split_data(val_pct: float) -> \
-        Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Load and split the data into training and validation sets.
-
-    Args:
-        val_pct: The percentage of the data to be used for validation.
-
-    Returns:
-        A tuple containing the data schema, training split, and validation split.
-    """
-    train_data = read_csv_in_directory(file_dir_path=paths.TRAIN_DIR)
-    train_split, val_split = split_train_val(train_data, val_pct=val_pct)
-    return train_split, val_split
-
 
 
 def check_preprocessing():
@@ -43,9 +26,12 @@ def check_preprocessing():
     data_schema = load_json_data_schema(paths.INPUT_SCHEMA_DIR)
     save_schema(schema=data_schema, output_path=paths.SAVED_SCHEMA_PATH)
 
-    # load model config, and perform train/validation split
+    # load model config
     model_config = read_json_as_dict(paths.MODEL_CONFIG_FILE_PATH)
+
+    # load train data and perform train/validation split
     train_split, val_split = load_and_split_data(
+        file_dir_path=paths.TRAIN_DIR,
         val_pct=model_config.get("validation_split", 0.2))
 
     # fit and transform using pipeline and target encoder, then save them
@@ -60,18 +46,15 @@ def check_preprocessing():
                                transformed_train_targets)
 
     # visualize inspect processed inputs and targets
-    print("*" * 60)
     print("Original train and valid split shapes:", train_split.shape, val_split.shape)
     print("Transformed and balanced train X/y shapes:", balanced_train_inputs.shape, balanced_train_labels.shape)
     print("Balanced train data class counts:", Counter(balanced_train_labels.values.ravel()))
     print("Processed validation X/y shapes:", transformed_val_inputs.shape, transformed_val_labels.shape)
 
-    print("Transformed and balanced train data:")
+    print("Transformed and balanced train features:")
     print(balanced_train_inputs.head())
-
-    print("Transformed and balanced validation data:")
-    print(transformed_val_inputs.head())
-
+    print("Transformed and balanced train targets:")
+    print(balanced_train_labels.head())
 
     save_pipeline_and_target_encoder(
         pipeline, target_encoder,
