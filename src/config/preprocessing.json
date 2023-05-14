@@ -8,7 +8,7 @@
   "categorical_transformers": {
     "cat_most_frequent_imputer": { "threshold": 0.1 },
     "missing_tag_imputer": {
-      "strategy": "constant",
+      "imputation_method": "missing",
       "fill_value": "missing"
     },
     "rare_label_encoder": {
@@ -19,7 +19,9 @@
     "one_hot_encoder": { "handle_unknown": "ignore" }
   },
   "feature_selection_preprocessing": {
-    "constant_feature_dropper": { "tol": 1 },
-    "correlated_feature_dropper": { "threshold": 0.95 }
+    "constant_feature_dropper": { "tol": 1, "missing_values": "include" },
+    "correlated_feature_dropper": {
+      "threshold": 0.95
+    }
   }
 }
