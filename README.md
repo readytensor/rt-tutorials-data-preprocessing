@@ -1,26 +1,66 @@
 ## Introduction
 
-This repository demonstrates how to create a adaptable data preprocessing pipeline for your machine learning algorithm implementation. The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
+This repository is part of a comprehensive tutorial series aimed at building adaptable machine learning models. In this repository, we add an adaptable data preprocessing pipeline for a binary classification machine learning algorithm implementation. We also have a target encoder to handle the targets.
 
-## Repository Contents
+The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
 
-The `app/` folder in the repository contains the following key folders/sub-folders:
+## Project Structure
 
-- `data_management/` will all files related to handling and preprocessing data.
-- `inputs/` contains the input files related to the _titanic_ dataset.
-- `model/` is a folder to save model artifacts and other assets specific to the trained model. Within this folder:
-  - `artifacts/` is location to save model artifacts (i.e. the saved model including the trained preprocessing pipeline)
-- `paths.py`: script contains variables which represent various paths to be used in the repository.
-- `run_script.py`: an example script that shows the usage of the preprocessing pipeline and processed outputs.
+```bash
+├── inputs/
+│   ├── data/
+│   │   ├── testing/
+│   │   └── training/
+│   └── schema/
+├── model/
+│   └── artifacts/
+├── outputs/
+│   ├── hpt_outputs/
+│   ├── logs/
+│   └── predictions/
+├── src/
+│   ├── config/
+│   ├── data_model/
+│   ├── hyperparameter_tuning/
+│   ├── prediction/
+│   ├── preprocessing/
+│   ├── schema/
+│   └── xai/
+├── tests/
+│   ├── <mirrors `/src` structure ...>
+│   ...
+│   ...
+├── tmp/
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
+```
+
+- **`/examples`**: This directory contains example files for the titanic dataset. Three files are included: `titanic_schema.json`, `titanic_train.csv` and `titanic_test.csv`. You can place these files in the `inputs/schema`, `inputs/data/training` and `inputs/data/testing` folders, respectively.
+- **`/inputs`**: This directory contains all the input files for your project, including the data and schema files. The data is further divided into testing and training subsets.
+- **`/model/artifacts`**: This directory is used to store the model artifacts, such as trained models and their parameters.
+- **`/outputs`**: The outputs directory contains all output files, including the prediction results, logs, and hyperparameter tuning outputs.
+- **`/src`**: This directory holds the source code for the project. It is further divided into various subdirectories such as `config` for configuration files, `data_model` for data models for input validation, `hyperparameter_tuning` for hyperparameter-tuning (HPT) related files, `prediction` for prediction model scripts, `preprocessing` for data preprocessing scripts, `schema` for schema scripts, and `xai` for explainable AI scripts. The following scripts under `src/preprocessing` are used for data preprocessing:
+  - `custom_transformers.py` contains custom-created transformers which conform to the scikit-learn API for transformers.
+  - `pipeline.py` contains the preprocessing pipeline which is used to transform the data. In addition to the custom transformers, it also contains built-in transformers from the `feature-engine` library.
+  - `target_encoder.py` contains the target encoder which is used to encode the target variable.
+  - `preprocess.py` contains main functions used to train, save, and load the preprocessing pipeline and target encoder. Also contained is a function to transform the data using the pipeline and encoder.
+- **`/tests`**: This directory contains all the tests for the project. It mirrors the `src` directory structure for consistency. Extensive unit tests are provided for the data preprocessing pipeline and target encoder.
+- **`/tmp`**: This directory is used for storing temporary files which are not necessary to commit to the repository.
+- **`.gitignore`**: This file specifies the files and folders that should be ignored by Git.
+- **`LICENSE`**: This file contains the license for the project.
+- **`README.md`**: This file contains the documentation for the project, explaining how to set it up and use it.
+- **`requirements.txt`**: This file lists the dependencies for the project, making it easier to install all necessary packages.
 
 ## Usage
 
 - Create your virtual environment and install dependencies listed in `requirements.txt`.
-- Place the train data file in csv format in the path `./app/inputs/data/training/`
+- Place the train data file in csv format in the path `./app/inputs/data/training/`. Also place the test data file in csv format in the path `./app/inputs/data/testing/`.
 - Place the schema file in JSON format in the path `./app/inputs/data_config/`. The schema conforms to Ready Tensor specification for the **Binary Classification-Base** category.
-- Update the file paths in the `run_script.py` file in `./app/` and run the script as follows.
+- Run the script `check_preprocessing.py` file in `./src/` as follows: `python app/check_preprocessing.py`.
 
-The script will print top 10 rows of the transformed data and also save the preprocessing pipeline in the path `./app/outputs/artifacts/`.
+The script will print information related to the transformed data to the terminal. Also, the trained pipeline and target encoder will be saved to the path `model/artifacts`.
 
 ## Requirements
 
