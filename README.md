@@ -1,6 +1,6 @@
 ## Introduction
 
-This repository is part of a comprehensive tutorial series aimed at building adaptable machine learning models. In this repository, we add an adaptable data preprocessing pipeline for a binary classification machine learning algorithm implementation. We also have a target encoder to handle the targets.
+This repository is part of a comprehensive tutorial series on [Ready Tensor](https://docs.readytensor.ai/category/creating-adaptable-ml-models) aimed at building adaptable machine learning models. In this repository, we add an adaptable data preprocessing pipeline for a binary classification machine learning algorithm implementation. We also have a target encoder to handle the targets.
 
 The repo provides examples of how you can avoid hard-coding your implementation to a specific dataset, which can make it easier to apply your algorithms to new datasets in the future.
 
