@@ -5,13 +5,14 @@ import tempfile
 import pytest
 import pandas as pd
 import numpy as np
-import random
+from tempfile import TemporaryDirectory
 
 from src.utils import (
     read_json_as_dict,
     read_csv_in_directory,
     set_seeds,
-    split_train_val)
+    split_train_val,
+    load_and_split_data)
 
 
 def test_read_json_as_dict_with_file_path():
@@ -195,4 +196,30 @@ def test_set_seeds():
     with pytest.raises(Exception, match="Invalid seed value"):
         set_seeds("Invalid")
 
-    
+
+def test_load_and_split_data():
+    """
+    Test the load_and_split_data function.
+    """
+    with TemporaryDirectory() as tmpdir:
+        # Create a test CSV file in the temporary directory
+        df = pd.DataFrame({'col1': range(10), 'col2': range(10)})
+        file_path = os.path.join(tmpdir, 'test.csv')
+        df.to_csv(file_path, index=False)
+
+        # Load and split the data using the function
+        train_split, val_split = load_and_split_data(file_dir_path=tmpdir, val_pct=0.2)
+
+        # Check the results
+        assert isinstance(train_split, pd.DataFrame)
+        assert isinstance(val_split, pd.DataFrame)
+        assert len(train_split) == 8  # 80% of 10
+        assert len(val_split) == 2  # 20% of 10
+
+def test_load_and_split_data_no_file():
+    """
+    Test the load_and_split_data function when no CSV file exists in the directory.
+    """
+    with TemporaryDirectory() as tmpdir:
+        with pytest.raises(ValueError):
+            load_and_split_data(file_dir_path=tmpdir, val_pct=0.2)

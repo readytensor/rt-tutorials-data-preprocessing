@@ -21,7 +21,7 @@
   "feature_selection_preprocessing": {
     "constant_feature_dropper": { "tol": 1, "missing_values": "include" },
     "correlated_feature_dropper": {
-      "threshold": 0.95
+      "threshold": 0.98
     }
   }
 }
