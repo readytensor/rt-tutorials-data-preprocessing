@@ -40,16 +40,19 @@ def get_preprocess_pipeline(data_schema: Any, preprocessing_config: dict = prepr
     imputation_method = num_config["mean_median_imputer"]["imputation_method"]
     
     cat_config = preprocessing_config["categorical_transformers"]
-    cat_imputer_threshold = cat_config["cat_most_frequent_imputer"]["threshold"]
+    cat_imputer_freq_threshold = cat_config["cat_most_frequent_imputer"]["threshold"]
+    cat_imputer_missing_method = cat_config["missing_tag_imputer"]["imputation_method"]
+    cat_imputer_missing_fill_val = cat_config["missing_tag_imputer"]["fill_value"]
     rare_label_tol = cat_config["rare_label_encoder"]["tol"]
     rare_label_n_categories = cat_config["rare_label_encoder"]["n_categories"]
     
     feat_sel_pp_config = preprocessing_config["feature_selection_preprocessing"]
     constant_feature_tol = feat_sel_pp_config["constant_feature_dropper"]["tol"]
+    constant_feature_missing = feat_sel_pp_config["constant_feature_dropper"]["missing_values"]
     correl_feature_threshold = feat_sel_pp_config["correlated_feature_dropper"]["threshold"]
 
-
-    column_selector = transformers.ColumnSelector(columns=data_schema.features)
+    column_selector = transformers.ColumnSelector(columns=data_schema.features)  
+    nan_col_dropper = transformers.DropAllNaNFeatures(columns=data_schema.features)
     string_caster = transformers.TypeCaster(
         vars=data_schema.categorical_features + [data_schema.id, data_schema.target],
         cast_type=str
@@ -77,35 +80,37 @@ def get_preprocess_pipeline(data_schema: Any, preprocessing_config: dict = prepr
     )
     cat_most_frequent_imputer = transformers.MostFrequentImputer(
         cat_vars=data_schema.categorical_features,
-        threshold=cat_imputer_threshold
+        threshold=cat_imputer_freq_threshold
     )
     cat_imputer_with_missing_tag = transformers.TransformerWrapper(
         transformer=CategoricalImputer,
         variables=data_schema.categorical_features,
-        imputation_method="missing"
+        imputation_method=cat_imputer_missing_method,
+        fill_value=cat_imputer_missing_fill_val
     )
     rare_label_encoder = transformers.TransformerWrapper(
         transformer=RareLabelEncoder,
         variables=data_schema.categorical_features,
         tol=rare_label_tol,
         n_categories=rare_label_n_categories
-    )
+    )     
     constant_feature_dropper = DropConstantFeatures(
         variables=None,
         tol=constant_feature_tol,
-        missing_values="raise")
+        missing_values=constant_feature_missing)
     duplicated_feature_dropper = DropDuplicateFeatures(
         variables=None,
         missing_values="raise")
     correlated_feature_dropper = SmartCorrelatedSelection(
         variables=None,
         selection_method="variance",
-        threshold=correl_feature_threshold, missing_values="raise")
+        threshold=correl_feature_threshold,
+        missing_values="raise")
     one_hot_encoder = transformers.OneHotEncoderMultipleCols(ohe_columns=data_schema.categorical_features)
-    
-    
+
     pipeline = Pipeline([
         ("column_selector", column_selector),
+        ("nan_col_dropper", nan_col_dropper),
         ("string_caster", string_caster),
         ("float_caster", float_caster),
         ("missing_indicator_numeric", missing_indicator_numeric),
