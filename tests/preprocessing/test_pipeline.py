@@ -73,7 +73,7 @@ def preprocessing_config():
         "categorical_transformers": {
             "cat_most_frequent_imputer": { "threshold": 0.1 },
             "missing_tag_imputer": {
-            "strategy": "constant",
+            "imputation_method": "missing",
             "fill_value": "missing"
             },
             "rare_label_encoder": {
@@ -84,10 +84,12 @@ def preprocessing_config():
             "one_hot_encoder": { "handle_unknown": "ignore" }
         },
         "feature_selection_preprocessing": {
-            "constant_feature_dropper": { "tol": 1 },
-            "correlated_feature_dropper": { "threshold": 0.95 }
+            "constant_feature_dropper": { "tol": 1, "missing_values": "include" },
+            "correlated_feature_dropper": {
+            "threshold": 0.95
+            }
         }
-    }
+        }
     return config
 
 # Fixture to create a sample DataFrame for testing
@@ -334,3 +336,53 @@ def test_pipeline_with_only_categorical_features(schema_provider, preprocessing_
     transformed_data = transform_inputs(trained_pipeline, categorical_only_data)
 
     assert transformed_data is not None, "Preprocessed data should not be None"
+
+
+def test_pipeline_drops_all_nan_numeric_columns(schema_provider, preprocessing_config):
+    """
+    Test if the pipeline drops numeric columns where all values are NaN.
+    """
+    pipeline = get_preprocess_pipeline(schema_provider, preprocessing_config)
+    df = pd.DataFrame({
+        'numeric_feature_1': [None, None, None, None],
+        'numeric_feature_2': [1, 2, 3, 4],
+        'categorical_feature_1': ['A', 'B', 'A', 'B'],
+        'target_field': ['A', 'B', 'A', 'B']
+    })
+    pipeline = train_pipeline(pipeline, df)
+    transformed = transform_inputs(pipeline, df)
+    assert 'numeric_feature_1' not in transformed.columns  # This column should be dropped
+    assert 'numeric_feature_2' in transformed.columns  # This column should remain
+
+
+def test_pipeline_drops_all_nan_categorical_columns(schema_provider, preprocessing_config):
+    """
+    Test if the pipeline drops categorical columns where all values are NaN.
+    """
+    pipeline = get_preprocess_pipeline(schema_provider, preprocessing_config)
+    df = pd.DataFrame({
+        'numeric_feature_1': [1, 2, 3, 4],
+        'numeric_feature_2': [1, 2, 3, 4],
+        'categorical_feature_1': [None, None, None, None],
+        'target_field': ['A', 'B', 'A', 'B']
+    })
+    pipeline = train_pipeline(pipeline, df)
+    transformed = transform_inputs(pipeline, df)
+
+    assert 'categorical_feature_1' not in transformed.columns  # This column should be dropped
+    assert 'numeric_feature_1' in transformed.columns  # This column should remain
+
+
+def test_pipeline_raises_value_error_for_all_nan_data(schema_provider, preprocessing_config):
+    """
+    Test if the pipeline raises a ValueError when given data only contains columns with all missing values.
+    """
+    pipeline = get_preprocess_pipeline(schema_provider, preprocessing_config)
+    df = pd.DataFrame({
+        'numeric_feature_1': [None, None, None, None],
+        'numeric_feature_2': [None, None, None, None],
+        'categorical_feature_1': [None, None, None, None],
+        'target_field': [None, None, None, None]
+    })
+    with pytest.raises(ValueError, match="All features in the input dataframe are NaN"):
+        pipeline = train_pipeline(pipeline, df)
