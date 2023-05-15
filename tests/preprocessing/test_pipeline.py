@@ -7,105 +7,10 @@ from preprocessing.pipeline import (
     train_pipeline,
     transform_inputs
 )
-from schema.data_schema import BinaryClassificationSchema
 
 
-# Fixture to create a sample schema for testing
-@pytest.fixture
-def schema_provider():
-    valid_schema = {
-        "title": "test dataset",
-        "description": "test dataset",
-        "problemCategory": "binary_classification",
-        "version": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {
-            "name": "id",
-            "description": "unique identifier."
-        },
-        "target": {
-            "name": "target_field",
-            "description":  "some target desc.",
-            "allowedValues" :     ["A", "B"],
-            "positiveClass": "A"
-        },
-        "predictors": [
-            {
-                "name": "numeric_feature_1",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 10
-            },
-            {
-                "name": "numeric_feature_2",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 1.1
-            },
-            {
-                "name": "categorical_feature_1",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "allowedValues": ["A", "B", "C"]
-            },
-            {
-                "name": "categorical_feature_2",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "allowedValues": ["X", "Y", "Z"]
-            }
-        ]
-    }
-    return BinaryClassificationSchema(valid_schema)
-
-
-
-# Fixture to create a preprocessing config
-@pytest.fixture
-def preprocessing_config():
-    config = {
-        "numeric_transformers": {
-            "missing_indicator": {},
-            "mean_median_imputer": { "imputation_method": "mean" },
-            "standard_scaler": {},
-            "outlier_clipper": { "min_val": -4.0, "max_val": 4.0 }
-        },
-        "categorical_transformers": {
-            "cat_most_frequent_imputer": { "threshold": 0.1 },
-            "missing_tag_imputer": {
-            "imputation_method": "missing",
-            "fill_value": "missing"
-            },
-            "rare_label_encoder": {
-            "tol": 0.03,
-            "n_categories": 1,
-            "replace_with": "__rare__"
-            },
-            "one_hot_encoder": { "handle_unknown": "ignore" }
-        },
-        "feature_selection_preprocessing": {
-            "constant_feature_dropper": { "tol": 1, "missing_values": "include" },
-            "correlated_feature_dropper": {
-            "threshold": 0.95
-            }
-        }
-        }
-    return config
-
-# Fixture to create a sample DataFrame for testing
-@pytest.fixture
-def sample_data():
-    data = pd.DataFrame(
-        {
-            "id": range(1, 6),
-            "numeric_feature_1": [10, 20, 30, 40, 50],
-            "numeric_feature_2": [1.0, -2., 3, -4, 5],
-            "categorical_feature_1": ["A", "B", "C", "A", "B"],
-            "categorical_feature_2": ["P", "Q", "R", "S", "T"],
-            "target_field": ["A", "B", "A", "B", "A"]
-        }
-    )
-    return data
+# Fixtures called schema_provider, preprocessing_config and sample_data
+# are defined in conftest.py
 
 
 def test_get_preprocess_pipeline(schema_provider, preprocessing_config):
