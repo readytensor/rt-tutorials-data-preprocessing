@@ -7,11 +7,16 @@ The repo provides examples of how you can avoid hard-coding your implementation 
 ## Project Structure
 
 ```bash
+binary_class_project/
+├── examples/
 ├── inputs/
 │   ├── data/
 │   │   ├── testing/
+│   │   │   └── titanic_test.csv
 │   │   └── training/
+│   │       └── titanic_train.csv
 │   └── schema/
+│       └─ titanic_schema.json│
 ├── model/
 │   └── artifacts/
 ├── outputs/
@@ -20,16 +25,29 @@ The repo provides examples of how you can avoid hard-coding your implementation 
 │   └── predictions/
 ├── src/
 │   ├── config/
+│   │   ├── model_config.json
+│   │   ├── paths.py
+│   │   └── preprocessing.py
 │   ├── data_model/
 │   ├── hyperparameter_tuning/
 │   ├── prediction/
 │   ├── preprocessing/
+│   │   ├── custom_transformers.py
+│   │   ├── pipeline.py
+│   │   ├── preprocess.py
+│   │   └── target_encoder.py
 │   ├── schema/
-│   └── xai/
+│   │   └── data_schema.py
+│   ├── xai/
+│   ├── check_preprocessing.py
+│   └── utils.py
 ├── tests/
 │   ├── <mirrors `/src` structure ...>
+│   ├── schema/
+│   │   └── test_data_schema.py
 │   ...
 │   ...
+│   └── test_utils.py
 ├── tmp/
 ├── .gitignore
 ├── LICENSE
