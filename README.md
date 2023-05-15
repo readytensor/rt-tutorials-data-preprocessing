@@ -56,8 +56,8 @@ The repo provides examples of how you can avoid hard-coding your implementation 
 ## Usage
 
 - Create your virtual environment and install dependencies listed in `requirements.txt`.
-- Place the train data file in csv format in the path `./app/inputs/data/training/`. Also place the test data file in csv format in the path `./app/inputs/data/testing/`.
-- Place the schema file in JSON format in the path `./app/inputs/data_config/`. The schema conforms to Ready Tensor specification for the **Binary Classification-Base** category.
+- Place the train data file in csv format in the path `./src/inputs/data/training/`. Also place the test data file in csv format in the path `./src/inputs/data/testing/`.
+- Place the schema file in JSON format in the path `./src/inputs/data_config/`. The schema conforms to Ready Tensor specification for the **Binary Classification** category.
 - Run the script `check_preprocessing.py` file in `./src/` as follows: `python app/check_preprocessing.py`.
 
 The script will print information related to the transformed data to the terminal. Also, the trained pipeline and target encoder will be saved to the path `model/artifacts`.
