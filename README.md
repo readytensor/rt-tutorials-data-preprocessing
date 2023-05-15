@@ -43,11 +43,8 @@ binary_class_project/
 │   └── utils.py
 ├── tests/
 │   ├── <mirrors `/src` structure ...>
-│   ├── schema/
-│   │   └── test_data_schema.py
 │   ...
 │   ...
-│   └── test_utils.py
 ├── tmp/
 ├── .gitignore
 ├── LICENSE
