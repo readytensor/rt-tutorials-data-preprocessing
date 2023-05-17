@@ -60,8 +60,13 @@ class DropAllNaNFeatures(BaseEstimator, TransformerMixin):
                 Type of selection. Must be either 'keep' or 'drop'.
         """
         self.columns = columns
+        self.nan_columns_to_drop = []
 
-    def fit(self, *args, **kwargs):
+    def fit(self, X:pd.DataFrame, y=None):
+        cols_to_check = [c for c in X.columns if c in self.columns]
+        if len(cols_to_check) ==0:
+            return self
+        self.nan_columns_to_drop = X[cols_to_check].columns[X[cols_to_check].isna().all()].tolist()
         return self
 
     def transform(self, X: pd.DataFrame):
@@ -74,14 +79,10 @@ class DropAllNaNFeatures(BaseEstimator, TransformerMixin):
         Returns:
             pandas.DataFrame: The transformed data.
         """
-        cols_to_check = [c for c in X.columns if c in self.columns]
-        if len(cols_to_check) ==0:
-            return X
-        X = X.copy()
-        columns_with_all_nan_ = X[cols_to_check].columns[X[cols_to_check].isna().all()].tolist()
-        X = X.drop(columns=columns_with_all_nan_, errors='ignore')
-        if X.empty:
-            raise ValueError("All features in the input dataframe are NaN. Dropping all yields empty dataframe")
+        if len(self.nan_columns_to_drop) > 0:
+            X = X.drop(columns=self.nan_columns_to_drop, errors='ignore')
+            if X.empty:
+                raise ValueError("All features in the input dataframe are NaN. Dropping all yields empty dataframe")        
         return X
 
 
@@ -185,6 +186,9 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
             return X
 
         non_fitted_vars = [f for f in X.columns if f not in self.fitted_vars]
+        print("X")
+        print(X)
+        print(self.fitted_vars)
         transformed = self.transformer.transform(X[self.fitted_vars])
     
         # If the transformed data is a numpy array, convert it to a DataFrame
@@ -381,4 +385,3 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         if self.drop_original:
             transformed_data.drop(self.fitted_vars, axis=1, inplace=True)
         return transformed_data
-
