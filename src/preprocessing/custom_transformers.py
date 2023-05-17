@@ -186,9 +186,6 @@ class TransformerWrapper(BaseEstimator, TransformerMixin):
             return X
 
         non_fitted_vars = [f for f in X.columns if f not in self.fitted_vars]
-        print("X")
-        print(X)
-        print(self.fitted_vars)
         transformed = self.transformer.transform(X[self.fitted_vars])
     
         # If the transformed data is a numpy array, convert it to a DataFrame
@@ -385,3 +382,4 @@ class OneHotEncoderMultipleCols(BaseEstimator, TransformerMixin):
         if self.drop_original:
             transformed_data.drop(self.fitted_vars, axis=1, inplace=True)
         return transformed_data
+
