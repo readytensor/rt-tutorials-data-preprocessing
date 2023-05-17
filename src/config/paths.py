@@ -26,8 +26,6 @@ PIPELINE_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "pipeline.joblib")
 TARGET_ENCODER_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "target_encoder.joblib")
 # Name of the predictor model file inside artifacts directory
 PREDICTOR_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "predictor.joblib")
-# Name of the best (tuned) hyperparameters file
-BEST_HYPERPARAMETERS_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "best_hyperparameters.json")
 # Name of the explainer file inside artifacts directory
 EXPLAINER_FILE_PATH = os.path.join(MODEL_ARTIFACTS_PATH, "explainer.joblib")
 
@@ -39,6 +37,8 @@ PREDICTIONS_DIR = os.path.join(OUTPUT_DIR, "predictions")
 PREDICTIONS_FILE_PATH = os.path.join(PREDICTIONS_DIR, "predictions.csv")
 # Path to HPT results directory inside outputs directory
 HPT_OUTPUTS_DIR = os.path.join(OUTPUT_DIR, "hpt_outputs")
+# Name of the hyperparameters results file
+HPT_RESULTS_FILE_PATH = os.path.join(HPT_OUTPUTS_DIR, "HPT_results.csv")
 
 # Path to logs directory inside outputs directory
 LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
