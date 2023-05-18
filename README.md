@@ -27,7 +27,7 @@ binary_class_project/
 │   ├── config/
 │   │   ├── model_config.json
 │   │   ├── paths.py
-│   │   └── preprocessing.py
+│   │   └── preprocessing.json
 │   ├── data_model/
 │   ├── hyperparameter_tuning/
 │   ├── prediction/
