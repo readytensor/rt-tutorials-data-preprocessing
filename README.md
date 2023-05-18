@@ -9,14 +9,14 @@ The repo provides examples of how you can avoid hard-coding your implementation 
 ```bash
 binary_class_project/
 ├── examples/
+│   ├── titanic_schema.json
+│   ├── titanic_train.csv
+│   └── titanic_test.csv
 ├── inputs/
 │   ├── data/
 │   │   ├── testing/
-│   │   │   └── titanic_test.csv
 │   │   └── training/
-│   │       └── titanic_train.csv
 │   └── schema/
-│       └─ titanic_schema.json│
 ├── model/
 │   └── artifacts/
 ├── outputs/
@@ -61,7 +61,7 @@ binary_class_project/
   - `pipeline.py` contains the preprocessing pipeline which is used to transform the data. In addition to the custom transformers, it also contains built-in transformers from the `feature-engine` library.
   - `target_encoder.py` contains the target encoder which is used to encode the target variable.
   - `preprocess.py` contains main functions used to train, save, and load the preprocessing pipeline and target encoder. Also contained is a function to transform the data using the pipeline and encoder.
-- **`/tests`**: This directory contains all the tests for the project. It mirrors the `src` directory structure for consistency. Extensive unit tests are provided for the data preprocessing pipeline and target encoder.
+- **`/tests`**: This directory contains all the tests for the project. It mirrors the `src` directory structure for consistency. There is also a `test_resources` folder inside `/tests` which can contain any resources needed for the tests (e.g. sample data files).
 - **`/tmp`**: This directory is used for storing temporary files which are not necessary to commit to the repository.
 - **`.gitignore`**: This file specifies the files and folders that should be ignored by Git.
 - **`LICENSE`**: This file contains the license for the project.
