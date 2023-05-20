@@ -16,9 +16,13 @@ from preprocessing.target_encoder import (
     save_target_encoder,
     load_target_encoder
 )
+from utils import read_json_as_dict
 
 def train_pipeline_and_target_encoder(
-        data_schema: Any, train_split: pd.DataFrame) -> Tuple[Any, Any]:
+        data_schema: Any,
+        train_split: pd.DataFrame,
+        pipeline_config_file_path: str
+        ) -> Tuple[Any, Any]:
     """
     Train the pipeline and target encoder
 
@@ -29,8 +33,11 @@ def train_pipeline_and_target_encoder(
     Returns:
         A tuple containing the pipeline and target encoder.
     """
+    pipeline_config = read_json_as_dict(pipeline_config_file_path)
+    
     # create input trnasformation pipeline and target encoder
-    preprocess_pipeline = get_preprocess_pipeline(data_schema=data_schema)
+    preprocess_pipeline = get_preprocess_pipeline(
+        data_schema=data_schema, pipeline_config=pipeline_config)
     target_encoder = get_target_encoder(data_schema=data_schema)
 
     # train pipeline and target encoder

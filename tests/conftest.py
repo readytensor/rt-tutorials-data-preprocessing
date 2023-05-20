@@ -70,8 +70,9 @@ def model_config():
     return config
 
 
+
 @pytest.fixture
-def preprocessing_config():
+def pipeline_config():
     """ Fixture to create a preprocessing config"""
     config = {
         "numeric_transformers": {
@@ -101,6 +102,16 @@ def preprocessing_config():
         }
         }
     return config
+
+
+@pytest.fixture
+def pipeline_config_file_path(pipeline_config, tmpdir):
+    """ Fixture to create and save a sample preprocessing_config json"""
+    config_file_path = tmpdir.join('preprocessing.json')
+    with open(config_file_path, 'w') as file:
+        json.dump(pipeline_config, file)
+    return str(config_file_path)
+
 
 @pytest.fixture
 def sample_data():

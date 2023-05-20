@@ -1,6 +1,5 @@
-from typing import Tuple
+
 from collections import Counter
-import pandas as pd
 
 from config import paths
 from schema.data_schema import load_json_data_schema, save_schema
@@ -18,25 +17,45 @@ from preprocessing.preprocess import (
 )
 
 
-def check_preprocessing():
-    """Applies data transformations to input features and targets."""
-    set_seeds(seed_value=0)
+def check_preprocessing(
+        input_schema_dir: str = paths.INPUT_SCHEMA_DIR,
+        saved_schema_path: str = paths.SAVED_SCHEMA_PATH,
+        model_config_file_path: str = paths.MODEL_CONFIG_FILE_PATH,
+        train_dir: str = paths.TRAIN_DIR,
+        pipeline_config_file_path: str = paths.PREPROCESSING_CONFIG_FILE_PATH,
+        pipeline_file_path: str = paths.PIPELINE_FILE_PATH,
+        target_encoder_file_path: str = paths.TARGET_ENCODER_FILE_PATH
+) -> None:
+    """
+    Run the training process and saves model artifacts
 
+    Args:
+        input_schema_dir (str, optional): The directory path of the input schema.
+        saved_schema_path (str, optional): The path where to save the schema.
+        model_config_file_path (str, optional): The path of the model configuration file.
+        train_dir (str, optional): The directory path of the train data.
+        pipeline_config_file_path (str, optional): The path of the preprocessing configuration file.
+        pipeline_file_path (str, optional): The path where to save the pipeline.
+        target_encoder_file_path (str, optional): The path where to save the target encoder.
+    
+    Returns:
+        None
+    """
     # load and save schema
-    data_schema = load_json_data_schema(paths.INPUT_SCHEMA_DIR)
-    save_schema(schema=data_schema, output_path=paths.SAVED_SCHEMA_PATH)
+    data_schema = load_json_data_schema(input_schema_dir)
+    save_schema(schema=data_schema, output_path=saved_schema_path)
 
     # load model config
-    model_config = read_json_as_dict(paths.MODEL_CONFIG_FILE_PATH)
+    model_config = read_json_as_dict(model_config_file_path)
+    set_seeds(seed_value=model_config["seed_value"])
 
     # load train data and perform train/validation split
     train_split, val_split = load_and_split_data(
-        file_dir_path=paths.TRAIN_DIR,
-        val_pct=model_config.get("validation_split", 0.2))
+        file_dir_path=train_dir, val_pct=model_config["validation_split"])
 
     # fit and transform using pipeline and target encoder, then save them
     pipeline, target_encoder = train_pipeline_and_target_encoder(
-        data_schema, train_split)
+        data_schema, train_split, pipeline_config_file_path)
     transformed_train_inputs, transformed_train_targets = transform_data(
         pipeline, target_encoder, train_split)
     transformed_val_inputs, transformed_val_labels = transform_data(
@@ -58,8 +77,8 @@ def check_preprocessing():
 
     save_pipeline_and_target_encoder(
         pipeline, target_encoder,
-        paths.PIPELINE_FILE_PATH,
-        paths.TARGET_ENCODER_FILE_PATH)
+        pipeline_file_path,
+        target_encoder_file_path)
 
 
 if __name__ == "__main__":

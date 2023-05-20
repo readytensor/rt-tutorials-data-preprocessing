@@ -14,39 +14,33 @@ from feature_engine.selection import (
     DropDuplicateFeatures,
     SmartCorrelatedSelection
 )
-
-from config import paths
 from preprocessing import custom_transformers as transformers
-from utils import read_json_as_dict
 
 
-preproc_config = read_json_as_dict(paths.PREPROCESSING_CONFIG_FILE_PATH)
-
-
-def get_preprocess_pipeline(data_schema: Any, preprocessing_config: dict = preproc_config) -> Pipeline:
+def get_preprocess_pipeline(data_schema: Any, pipeline_config: dict) -> Pipeline:
     """
     Create a preprocessor pipeline to transform data as defined by data_schema.
 
     Args:
         data_schema (BinaryClassificationSchema): An instance of the BinaryClassificationSchema.
-        preprocessing_config (dict): dictionary for preprocessing configuration.
+        pipeline_config (dict): dictionary for preprocessing configuration.
     Returns:
         Pipeline: A pipeline to transform data as defined by data_schema.
     """
 
-    num_config = preprocessing_config["numeric_transformers"]
+    num_config = pipeline_config["numeric_transformers"]
     clip_min_val = num_config["outlier_clipper"]["min_val"]
     clip_max_val = num_config["outlier_clipper"]["max_val"]
     imputation_method = num_config["mean_median_imputer"]["imputation_method"]
     
-    cat_config = preprocessing_config["categorical_transformers"]
+    cat_config = pipeline_config["categorical_transformers"]
     cat_imputer_freq_threshold = cat_config["cat_most_frequent_imputer"]["threshold"]
     cat_imputer_missing_method = cat_config["missing_tag_imputer"]["imputation_method"]
     cat_imputer_missing_fill_val = cat_config["missing_tag_imputer"]["fill_value"]
     rare_label_tol = cat_config["rare_label_encoder"]["tol"]
     rare_label_n_categories = cat_config["rare_label_encoder"]["n_categories"]
     
-    feat_sel_pp_config = preprocessing_config["feature_selection_preprocessing"]
+    feat_sel_pp_config = pipeline_config["feature_selection_preprocessing"]
     constant_feature_tol = feat_sel_pp_config["constant_feature_dropper"]["tol"]
     constant_feature_missing = feat_sel_pp_config["constant_feature_dropper"]["missing_values"]
     correl_feature_threshold = feat_sel_pp_config["correlated_feature_dropper"]["threshold"]
@@ -142,7 +136,7 @@ def train_pipeline(pipeline: Pipeline, train_data: pd.DataFrame) -> pd.DataFrame
     """
     if not isinstance(train_data, pd.DataFrame):
         raise TypeError("train_data must be a pandas DataFrame")
-    if train_data.empty: 
+    if train_data.empty:
         raise ValueError("train_data cannot be empty")
     pipeline.fit(train_data)
     return pipeline
