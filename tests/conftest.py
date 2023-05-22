@@ -44,14 +44,14 @@ def schema_dict():
                 "name": "categorical_feature_1",
                 "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "allowedValues": ["A", "B", "C"],
+                "categories": ["A", "B", "C"],
                 "nullable": True
             },
             {
                 "name": "categorical_feature_2",
                 "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "allowedValues": ["P", "Q", "R", "S", "T"],
+                "categories": ["P", "Q", "R", "S", "T"],
                 "nullable": False
             }
         ]
