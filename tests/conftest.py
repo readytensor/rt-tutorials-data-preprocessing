@@ -12,8 +12,8 @@ def schema_dict():
     valid_schema = {
         "title": "test dataset",
         "description": "test dataset",
-        "problemCategory": "binary_classification",
-        "version": 1.0,
+        "modelCategory": "binary_classification",
+        "schemaVersion": 1.0,
         "inputDataFormat": "CSV",
         "id": {
             "name": "id",
@@ -22,33 +22,37 @@ def schema_dict():
         "target": {
             "name": "target_field",
             "description":  "some target desc.",
-            "allowedValues" :     ["A", "B"],
+            "classes" :     ["A", "B"],
             "positiveClass": "A"
         },
-        "predictors": [
+        "features": [
             {
                 "name": "numeric_feature_1",
                 "description": "some desc.",
                 "dataType": "NUMERIC",
-                "example": 50
+                "example": 50,
+                "nullable": True
             },
             {
                 "name": "numeric_feature_2",
                 "description": "some desc.",
                 "dataType": "NUMERIC",
-                "example": 0.5
+                "example": 0.5,
+                "nullable": False
             },
             {
                 "name": "categorical_feature_1",
                 "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "allowedValues": ["A", "B", "C"]
+                "allowedValues": ["A", "B", "C"],
+                "nullable": True
             },
             {
                 "name": "categorical_feature_2",
                 "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "allowedValues": ["P", "Q", "R", "S", "T"]
+                "allowedValues": ["P", "Q", "R", "S", "T"],
+                "nullable": False
             }
         ]
     }
@@ -64,7 +68,7 @@ def schema_provider(schema_dict):
 def model_config():
     """ Fixture to create a sample model_config json"""
     config = {
-        "validation_split": 0.1,        
+        "validation_split": 0.1,
         "prediction_field_name": "prediction"
     }
     return config

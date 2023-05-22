@@ -103,8 +103,6 @@ def test_save_and_load_pipeline_and_target_encoder(
         assert loaded_target_encoder is not None
     transformed_inputs_2, transformed_targets_2 = transform_data(
         loaded_preprocess_pipeline, loaded_target_encoder, train_split_provider)
-    print(transformed_inputs)
-    print(transformed_inputs_2)
     assert transformed_inputs.equals(transformed_inputs_2)
     assert transformed_targets.equals(transformed_targets_2)
     
