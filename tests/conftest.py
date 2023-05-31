@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 
-from src.schema.data_schema import BinaryClassificationSchema
+from schema.data_schema import BinaryClassificationSchema
 
 
 @pytest.fixture
