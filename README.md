@@ -50,8 +50,9 @@ binary_class_project/
 ├── tmp/
 ├── .gitignore
 ├── LICENSE
+├── pytest.ini
 ├── README.md
-└── requirements.txt
+├── requirements.txt
 └── requirements-test.txt
 ```
 
@@ -78,25 +79,21 @@ binary_class_project/
 - - To run the code, simply run the script as follows.
 
 ```bash
-python src/check_schema.py
+python src/check_preprocessing.py
 ```
 
 The script will print information related to the transformed data to the terminal. Also, the trained pipeline and target encoder will be saved to the path `model/artifacts`.
 
 ## Requirements
 
-The code requires Python 3 and the following libraries:
-
-```makefile
-pandas==1.5.2
-numpy==1.20.3
-scikit-learn==1.0
-feature-engine==1.2.0
-imbalanced-learn==0.8.1
-```
-
-These packages can be installed by running the following command:
+Dependencies are listed in the file `requirements.txt`. These packages can be installed by running the following command:
 
 ```python
 pip install -r requirements.txt
+```
+
+For testing, dependencies are listed in the file `requirements-test.txt`. You can install these packages by running the following command:
+
+```python
+pip install -r requirements-test.txt
 ```
